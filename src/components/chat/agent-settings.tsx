@@ -8,6 +8,7 @@ import { Check, Pencil, Plus, Settings2, Trash2, Wrench } from "lucide-react";
 
 import type { Persona } from "@/db/schema";
 import type { AgentConfig, SelfDialogueConfig } from "@/lib/conversations";
+import { CLOUD_CATALOG, type CloudProvider } from "@/lib/models";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -29,6 +30,13 @@ interface ToolItem {
   description: string;
   source: "builtin" | "mcp";
   serverName?: string;
+}
+
+/** One local OpenAI-compatible server and the model ids it exposes. */
+interface EndpointModels {
+  provider: string;
+  label: string;
+  models: string[];
 }
 
 interface PersonaDraft {
@@ -64,6 +72,67 @@ function MiniSelect({
   );
 }
 
+/**
+ * Model picker for one dialogue voice. An empty value inherits the session's
+ * model; anything else is a stored model string (`getChatModel` resolves the
+ * provider prefix). A value that is no longer offered by any endpoint is still
+ * listed, so an override never silently resets to "inherit" on the next save.
+ */
+function VoiceModelSelect({
+  id,
+  value,
+  onChange,
+  endpoints,
+  cloudProviders,
+  loaded,
+}: {
+  id: string;
+  value: string | null;
+  onChange: (value: string | null) => void;
+  endpoints: EndpointModels[];
+  cloudProviders: CloudProvider[];
+  /** False until the model lists arrive — until then nothing can be judged missing. */
+  loaded: boolean;
+}) {
+  const known = new Set<string>([
+    ...endpoints.flatMap((e) => e.models),
+    ...CLOUD_CATALOG.flatMap((g) => g.models.map((m) => m.id)),
+  ]);
+  // Keep the saved value selectable even when no endpoint offers it, so an
+  // override is never silently reset. It is only *labelled* unavailable once the
+  // lists have loaded — otherwise every value looks missing while they load.
+  const orphan = value && !known.has(value) ? value : null;
+
+  return (
+    <MiniSelect id={id} value={value ?? ""} onChange={(v) => onChange(v || null)}>
+      <option value="">Same as session model</option>
+      {orphan ? (
+        <option value={orphan}>{loaded ? `${orphan} (unavailable)` : orphan}</option>
+      ) : null}
+      {endpoints
+        .filter((e) => e.models.length > 0)
+        .map((e) => (
+          <optgroup key={e.provider} label={e.label}>
+            {e.models.map((m) => (
+              <option key={m} value={m}>
+                {m}
+              </option>
+            ))}
+          </optgroup>
+        ))}
+      {CLOUD_CATALOG.filter((g) => cloudProviders.includes(g.provider)).map((g) => (
+        <optgroup key={g.provider} label={g.label}>
+          {g.models.map((m) => (
+            <option key={m.id} value={m.id}>
+              {m.label}
+            </option>
+          ))}
+        </optgroup>
+      ))}
+    </MiniSelect>
+  );
+}
+
 export function AgentSettings({
   conversationId,
   maxSteps,
@@ -85,6 +154,9 @@ export function AgentSettings({
   const [open, setOpen] = useState(false);
   const [tools, setTools] = useState<ToolItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const [endpoints, setEndpoints] = useState<EndpointModels[]>([]);
+  const [cloudProviders, setCloudProviders] = useState<CloudProvider[]>([]);
+  const [modelsLoaded, setModelsLoaded] = useState(false);
 
   const [steps, setSteps] = useState(maxSteps);
   const [enabled, setEnabled] = useState<string[] | null>(enabledKeys);
@@ -102,6 +174,19 @@ export function AgentSettings({
       .finally(() => setLoading(false));
   }
 
+  /** Populates the per-voice model pickers. Best-effort: a dead endpoint just
+   *  leaves the list short, and every voice still falls back to the session model. */
+  function loadModels() {
+    fetch("/api/llm/models")
+      .then((res) => res.json())
+      .then((data: { endpoints?: EndpointModels[]; cloudProviders?: CloudProvider[] }) => {
+        setEndpoints(data.endpoints ?? []);
+        setCloudProviders(data.cloudProviders ?? []);
+      })
+      .catch(() => undefined)
+      .finally(() => setModelsLoaded(true));
+  }
+
   function persist() {
     const safeSteps = Math.min(STEP_MAX, Math.max(STEP_MIN, Math.floor(steps) || maxSteps));
     const config: AgentConfig = {
@@ -117,6 +202,7 @@ export function AgentSettings({
     setOpen(next);
     if (next) {
       loadTools();
+      loadModels();
       return;
     }
     setDraft(null);
@@ -370,6 +456,14 @@ export function AgentSettings({
                         </option>
                       ))}
                     </MiniSelect>
+                    <VoiceModelSelect
+                      id="sd-solver-model"
+                      value={sd.solverModel}
+                      onChange={(v) => patchSd({ solverModel: v })}
+                      endpoints={endpoints}
+                      cloudProviders={cloudProviders}
+                      loaded={modelsLoaded}
+                    />
                   </div>
 
                   <div className="space-y-1.5">
@@ -388,10 +482,19 @@ export function AgentSettings({
                         </option>
                       ))}
                     </MiniSelect>
+                    <VoiceModelSelect
+                      id="sd-critic-model"
+                      value={sd.criticModel}
+                      onChange={(v) => patchSd({ criticModel: v })}
+                      endpoints={endpoints}
+                      cloudProviders={cloudProviders}
+                      loaded={modelsLoaded}
+                    />
                   </div>
                   <p className="text-muted-foreground text-[11px]">
-                    The debate streams as collapsible thoughts; only the final synthesis answers
-                    the user. More rounds = slower but more thorough.
+                    Each voice can run on its own model — pair a strong Solver with a cheap
+                    Critic, or two different families for genuinely independent views. The debate
+                    streams as collapsible thoughts; only the final synthesis answers the user.
                   </p>
                 </div>
               </TabsPanel>

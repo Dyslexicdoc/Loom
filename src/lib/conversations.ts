@@ -87,6 +87,14 @@ export interface SelfDialogueConfig {
   solverPersonaId: string | null;
   /** Persona cast as the Critic voice; null means a built-in Critic role. */
   criticPersonaId: string | null;
+  /**
+   * Model the Solver voice runs on; null inherits the session's model. Stored in
+   * the same prefixed form as `conversation.model` ("anthropic/…", "ollama/…",
+   * or a bare local id), so it resolves through `getChatModel` unchanged.
+   */
+  solverModel: string | null;
+  /** Model the Critic voice runs on; null inherits the session's model. */
+  criticModel: string | null;
 }
 
 /** Per-session agent configuration. `null` fields mean "use defaults / all tools". */
@@ -104,7 +112,14 @@ export const DEFAULT_SELF_DIALOGUE: SelfDialogueConfig = {
   rounds: 2,
   solverPersonaId: null,
   criticPersonaId: null,
+  solverModel: null,
+  criticModel: null,
 };
+
+/** Non-empty strings only — a blank model must inherit, not resolve to "". */
+function parseModelOverride(value: unknown): string | null {
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
 
 function parseSelfDialogue(raw: string | null): SelfDialogueConfig {
   if (!raw) {
@@ -122,6 +137,8 @@ function parseSelfDialogue(raw: string | null): SelfDialogueConfig {
         typeof parsed.solverPersonaId === "string" ? parsed.solverPersonaId : null,
       criticPersonaId:
         typeof parsed.criticPersonaId === "string" ? parsed.criticPersonaId : null,
+      solverModel: parseModelOverride(parsed.solverModel),
+      criticModel: parseModelOverride(parsed.criticModel),
     };
   } catch {
     return { ...DEFAULT_SELF_DIALOGUE };
@@ -180,9 +197,10 @@ export function setAgentConfig(id: string, config: AgentConfig): Conversation | 
       agentMaxSteps: config.maxSteps && config.maxSteps > 0 ? Math.floor(config.maxSteps) : null,
       agentTools: config.tools ? JSON.stringify(config.tools) : null,
       agentPersonaId: config.personaId ?? null,
-      agentReasoning: config.selfDialogue.enabled
-        ? JSON.stringify(config.selfDialogue)
-        : null,
+      // Always persisted, with `enabled` inside the blob as the single source of
+      // truth — so toggling self-dialogue off and back on keeps the voice cast
+      // and per-voice models instead of silently resetting them to defaults.
+      agentReasoning: JSON.stringify(config.selfDialogue),
       updatedAt: new Date().toISOString(),
     })
     .where(eq(conversations.id, id))

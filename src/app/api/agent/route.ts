@@ -101,6 +101,34 @@ export async function POST(request: Request) {
   }
 
   const lastMessage = messages[messages.length - 1];
+  const config = getAgentConfig(conversationId);
+  const maxSteps = Math.min(
+    AGENT_STEP_LIMIT,
+    Math.max(1, config.maxSteps ?? AGENT_MAX_STEPS),
+  );
+  const queryText = lastMessage?.role === "user" ? textFromUIMessage(lastMessage) : "";
+  const dialogue = config.selfDialogue;
+  const dialogueRuns = dialogue.enabled && Boolean(queryText);
+
+  // Each dialogue voice may run on its own LLM; null inherits the session's
+  // model. Resolved here — alongside the main model and *before* the user's
+  // message is persisted — so a misconfigured override (e.g. a cloud id with no
+  // API key) fails cleanly instead of saving a message that can never be answered.
+  let solverVoice: ReturnType<typeof getChatModel> | undefined;
+  let criticVoice: ReturnType<typeof getChatModel> | undefined;
+  if (dialogueRuns) {
+    try {
+      solverVoice = getChatModel(dialogue.solverModel ?? conversation.model);
+      criticVoice = getChatModel(dialogue.criticModel ?? conversation.model);
+    } catch (err) {
+      const detail = err instanceof Error ? err.message : "Failed to build model.";
+      return Response.json(
+        { error: `Self-dialogue model is unavailable: ${detail}` },
+        { status: 400 },
+      );
+    }
+  }
+
   if (lastMessage?.role === "user") {
     const text = textFromUIMessage(lastMessage);
     const hasFiles = lastMessage.parts.some((p) => p.type === "file");
@@ -114,13 +142,6 @@ export async function POST(request: Request) {
       });
     }
   }
-
-  const config = getAgentConfig(conversationId);
-  const maxSteps = Math.min(
-    AGENT_STEP_LIMIT,
-    Math.max(1, config.maxSteps ?? AGENT_MAX_STEPS),
-  );
-  const queryText = lastMessage?.role === "user" ? textFromUIMessage(lastMessage) : "";
 
   // Persona drives the assistant's identity; the operational tool-loop guidance is appended.
   const persona = config.personaId ? getPersona(config.personaId) : undefined;
@@ -167,7 +188,7 @@ export async function POST(request: Request) {
   const modelMessages = await convertToModelMessages(messages);
 
   // --- Plain agent run (no self-dialogue): stream straight through. ---
-  if (!config.selfDialogue.enabled || !queryText) {
+  if (!dialogueRuns) {
     const stream = createUIMessageStream<UIMessage>({
       originalMessages: messages,
       onFinish: ({ responseMessage }) => persistAssistant(conversationId, responseMessage),
@@ -194,15 +215,26 @@ export async function POST(request: Request) {
   }
 
   // --- Self-dialogue run: Solver↔Critic debate streamed as reasoning, then synthesize. ---
-  const rounds = Math.min(DIALOGUE_MAX_ROUNDS, Math.max(1, config.selfDialogue.rounds));
-  const solverPersona = config.selfDialogue.solverPersonaId
-    ? getPersona(config.selfDialogue.solverPersonaId)
+  const rounds = Math.min(DIALOGUE_MAX_ROUNDS, Math.max(1, dialogue.rounds));
+  const solverPersona = dialogue.solverPersonaId
+    ? getPersona(dialogue.solverPersonaId)
     : undefined;
-  const criticPersona = config.selfDialogue.criticPersonaId
-    ? getPersona(config.selfDialogue.criticPersonaId)
+  const criticPersona = dialogue.criticPersonaId
+    ? getPersona(dialogue.criticPersonaId)
     : undefined;
   const solverSystem = buildSolverSystem(solverPersona?.systemPrompt);
   const criticSystem = buildCriticSystem(criticPersona?.systemPrompt);
+  // Both are set whenever `dialogueRuns` is true, which gates this branch.
+  const solverLLM = solverVoice ?? { model, modelId };
+  const criticLLM = criticVoice ?? { model, modelId };
+
+  // Name the model in the turn label only when the voice is pinned to something
+  // other than the session's model, so the debate shows which LLM actually spoke
+  // without adding noise by default. Compares the stored (prefix-carrying) ids
+  // rather than the bare ones — "qwen3" and "ollama/qwen3" are different models
+  // that share a bare id.
+  const voiceLabel = (override: string | null) =>
+    override && override !== conversation.model ? ` · ${override}` : "";
 
   const stream = createUIMessageStream<UIMessage>({
     originalMessages: messages,
@@ -223,12 +255,13 @@ export async function POST(request: Request) {
         roundNo: number,
         system: string,
         label: string,
+        voice: ReturnType<typeof getChatModel>,
       ): Promise<string> => {
         const id = `${role.toLowerCase()}-${roundNo}`;
         writer.write({ type: "reasoning-start", id });
         writer.write({ type: "reasoning-delta", id, delta: `${label}\n` });
         const turn = streamText({
-          model,
+          model: voice.model,
           system,
           prompt: buildTurnPrompt(role, queryText, transcript),
         });
@@ -242,9 +275,21 @@ export async function POST(request: Request) {
       };
 
       for (let r = 1; r <= rounds; r++) {
-        const solver = await runTurn("Solver", r, solverSystem, `▸ Solver · round ${r}`);
+        const solver = await runTurn(
+          "Solver",
+          r,
+          solverSystem,
+          `▸ Solver · round ${r}${voiceLabel(dialogue.solverModel)}`,
+          solverLLM,
+        );
         transcript += `\n\nSOLVER (round ${r}):\n${solver}`;
-        const critic = await runTurn("Critic", r, criticSystem, `▸ Critic · round ${r}`);
+        const critic = await runTurn(
+          "Critic",
+          r,
+          criticSystem,
+          `▸ Critic · round ${r}${voiceLabel(dialogue.criticModel)}`,
+          criticLLM,
+        );
         transcript += `\n\nCRITIC (round ${r}):\n${critic}`;
       }
 
