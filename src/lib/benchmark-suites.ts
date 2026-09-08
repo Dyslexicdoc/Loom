@@ -213,6 +213,41 @@ const DEEP_LOG = factLog("delta", 40, {
   23: "The auxiliary array controller is addressed at node 5512.",
 });
 
+/**
+ * Records one corrected fact, one uncorrected fact, and one entry that names a
+ * cabinet without ever giving its technician — so the log supports a retraction
+ * question, a plain lookup, and two questions whose honest answer is "not here".
+ */
+const AUDIT_LOG = factLog("alpha", 34, {
+  6: "Cabinet 3 was inspected by technician Vaughn.",
+  15: "Cabinet 7 was inspected by technician Iqbal.",
+  23: "Correction: cabinet 3 was inspected by technician Moreau, not Vaughn.",
+  30: "Cabinet 9 is still awaiting inspection.",
+});
+
+/**
+ * A code-tracing task. The snippet is fenced so the model reads it as code, and
+ * the answer marker goes after it so a model that reasons through the trace is
+ * not punished for the intermediate values it prints along the way.
+ */
+const code = (
+  name: string,
+  ask: string,
+  snippet: string,
+  scoring: BenchTask["scoring"],
+  expected: string,
+): BenchTask => {
+  const suffix =
+    scoring === "numeric" ? NUMERIC_SUFFIX : scoring === "mcq" ? MCQ_SUFFIX : "";
+  return {
+    name,
+    category: "coding",
+    prompt: `${ask}\n\n\`\`\`\n${snippet}\n\`\`\`${suffix}`,
+    scoring,
+    expected,
+  };
+};
+
 export const BUILTIN_SUITES: BuiltinSuite[] = [
   {
     id: "builtin-quick-check",
@@ -921,6 +956,552 @@ export const BUILTIN_SUITES: BuiltinSuite[] = [
         "regex",
         "^\\W*LM\\d{3}7\\W*$",
       ),
+    ],
+  },
+  {
+    id: "builtin-gauntlet",
+    name: "The Gauntlet",
+    description:
+      "56 tasks at the edge of what a local model can do: code tracing on real language gotchas, long multi-turn chains with retractions and distractors, and abstention traps where the honest answer is 'not stated'. Every task is auto-scored. Strong models land 40–65%; anything above 75% is exceptional. Expect small models to fail most of the recall and abstention halves.",
+    tasks: [
+      // ---------- Code tracing: the answer is what the language actually does ----------
+      code(
+        "Closure over var",
+        "What does this JavaScript print? Reply with only the printed line.",
+        "const fns = [];\nfor (var i = 0; i < 3; i++) {\n  fns.push(() => i);\n}\nconsole.log(fns.map(f => f()).join(','));",
+        "regex",
+        "^\\W*3\\s*,\\s*3\\s*,\\s*3\\W*$",
+      ),
+      code(
+        "Late binding in a comprehension",
+        "What does this Python print? Reply with only the printed line.",
+        "fs = [lambda: i for i in range(3)]\nprint([g() for g in fs])",
+        "regex",
+        "^\\W*2\\s*,\\s*2\\s*,\\s*2\\W*$",
+      ),
+      code(
+        "Mutable default argument",
+        "What does the final call print? Reply with only the printed line.",
+        "def f(x, acc=[]):\n    acc.append(x)\n    return acc\n\nf(1)\nf(2)\nprint(f(3))",
+        "regex",
+        "^\\W*1\\s*,\\s*2\\s*,\\s*3\\W*$",
+      ),
+      code(
+        "Floor division with negatives",
+        "In Python 3, what does -7 // 2 evaluate to?",
+        "print(-7 // 2)",
+        "numeric",
+        "-4",
+      ),
+      code(
+        "Modulo sign",
+        "In Python 3, what does -7 % 2 evaluate to?",
+        "print(-7 % 2)",
+        "numeric",
+        "1",
+      ),
+      code(
+        "Microtask ordering",
+        "What does this JavaScript print? Reply with only the printed string.",
+        "const out = [];\nout.push('A');\nconst p = Promise.resolve().then(() => out.push('B'));\nout.push('C');\np.then(() => console.log(out.join('')));",
+        "exact",
+        "ACB",
+      ),
+      code(
+        "Default sort is lexicographic",
+        "What does this JavaScript print? Reply with only the printed line.",
+        "console.log([10, 9, 100, 1].sort().join(','));",
+        "regex",
+        "^\\W*1\\s*,\\s*10\\s*,\\s*100\\s*,\\s*9\\W*$",
+      ),
+      code(
+        "map with parseInt",
+        "What does this JavaScript print? Reply with only the printed line.",
+        "console.log([1, 2, 3].map(parseInt).join(','));",
+        "regex",
+        "^\\W*1\\s*,\\s*NaN\\s*,\\s*NaN\\W*$",
+      ),
+      code(
+        "Mutation during iteration",
+        "What is the final content of the array? Reply with only the remaining elements, comma-separated.",
+        "const a = [1, 2, 2, 3];\nfor (let i = 0; i < a.length; i++) {\n  if (a[i] === 2) a.splice(i, 1);\n}\nconsole.log(a);",
+        "regex",
+        "^\\W*1\\s*,\\s*2\\s*,\\s*3\\W*$",
+      ),
+      code(
+        "Integer-like key ordering",
+        "What does this JavaScript print? Reply with only the printed line.",
+        "const o = {};\no.b = 1;\no[2] = 2;\no.a = 3;\no[1] = 4;\nconsole.log(Object.keys(o).join(','));",
+        "regex",
+        "^\\W*1\\s*,\\s*2\\s*,\\s*b\\s*,\\s*a\\W*$",
+      ),
+      code(
+        "Map reinsertion order",
+        "What does this JavaScript print? Reply with only the printed line.",
+        "const m = new Map();\nm.set('a', 1);\nm.set('b', 2);\nm.delete('a');\nm.set('a', 3);\nconsole.log([...m.keys()].join(','));",
+        "regex",
+        "^\\W*b\\s*,\\s*a\\W*$",
+      ),
+      code(
+        "Negative-step slice",
+        "What does this Python print? Reply with only the printed string.",
+        "s = 'benchmark'\nprint(s[-3:-6:-1])",
+        "exact",
+        "amh",
+      ),
+      code(
+        "Naive recursion call count",
+        "How many times is fib called in total when fib(10) is evaluated, counting the outermost call?",
+        "def fib(n):\n    return n if n < 2 else fib(n - 1) + fib(n - 2)\n\nfib(10)",
+        "numeric",
+        "177",
+      ),
+      code(
+        "Evaluate RPN",
+        "What value does this reverse-Polish expression evaluate to?\n\n5 1 2 + 4 * + 3 -",
+        "tokens: 5 1 2 + 4 * + 3 -\nrule: each operator pops the two values before it, left operand first",
+        "numeric",
+        "14",
+      ),
+      code(
+        "Edit distance",
+        "What is the Levenshtein edit distance between 'kitten' and 'sitting'?",
+        "operations allowed: insert, delete, substitute (each cost 1)",
+        "numeric",
+        "3",
+      ),
+      code(
+        "Trace a while loop",
+        "How many times does the body of the while loop execute?",
+        "n = 27\nsteps = 0\nwhile n != 1:\n    n = n // 2 if n % 2 == 0 else 3 * n + 1\n    steps += 1\nprint(steps)",
+        "numeric",
+        "111",
+      ),
+      code(
+        "Clear the lowest set bit",
+        "x is 0b1011010. What is the value of x & (x - 1) in decimal?",
+        "x = 0b1011010\nprint(x & (x - 1))",
+        "numeric",
+        "88",
+      ),
+      code(
+        "Population count",
+        "How many bits are set to 1 in the binary number 1011010?",
+        "x = 0b1011010",
+        "numeric",
+        "4",
+      ),
+      code(
+        "Modular exponentiation",
+        "What is 3^200 mod 1000?",
+        "pow(3, 200, 1000)",
+        "numeric",
+        "1",
+      ),
+      code(
+        "Singular matrix",
+        "What is the determinant of this 3x3 matrix?",
+        "[[1, 2, 3],\n [4, 5, 6],\n [7, 8, 9]]",
+        "numeric",
+        "0",
+      ),
+      mcq(
+        "Loop with an early break",
+        "coding",
+        "A function loops i from 0 to n-1, and inside it loops j from 0 to n-1 but breaks out of the inner loop as soon as j reaches 5. What is the worst-case time complexity in terms of n, for large n? A) O(1) B) O(n) C) O(n log n) D) O(n^2)",
+        "B",
+      ),
+      mcq(
+        "Amortized append",
+        "coding",
+        "A dynamic array doubles its capacity whenever it is full, copying all elements. What is the amortized time complexity of a single append, and the worst case of one individual append? A) Amortized O(1), worst case O(1) B) Amortized O(1), worst case O(n) C) Amortized O(n), worst case O(n) D) Amortized O(log n), worst case O(n)",
+        "B",
+      ),
+      mcq(
+        "Recurrence",
+        "coding",
+        "A function on input size n does O(n) work and then calls itself twice on inputs of size n/2. What is its time complexity? A) O(n) B) O(n log n) C) O(n^2) D) O(2^n)",
+        "B",
+      ),
+      mcq(
+        "Which is not a race",
+        "coding",
+        "Two threads increment a shared integer counter 1000 times each with no synchronisation. Which statement is correct? A) The final value is always 2000 B) The final value is always 1000 C) The final value can be anything from 1000 to 2000 D) The program cannot compile",
+        "C",
+      ),
+      {
+        name: "Locate the off-by-one",
+        category: "coding",
+        prompt:
+          "This function should return the sum of the first n elements of xs, but it reads past the end when n equals len(xs). Which line number contains the bug?\n\n```\n1  def total(xs, n):\n2      s = 0\n3      i = 0\n4      while i <= n:\n5          s += xs[i]\n6          i += 1\n7      return s\n```" +
+          NUMERIC_SUFFIX,
+        scoring: "numeric",
+        expected: "4",
+      },
+      {
+        name: "Fix preserves behaviour",
+        category: "coding",
+        prompt:
+          "Rewrite this function so it no longer mutates its argument, keeping the returned value identical for every input. Reply with only the body of the corrected function as a single line of Python.\n\n```\ndef top(xs):\n    xs.sort()\n    return xs[-1]\n```",
+        scoring: "regex",
+        expected: "return\\s+(max\\(\\s*xs\\s*\\)|sorted\\(\\s*xs\\s*\\)\\s*\\[\\s*-1\\s*\\])",
+      },
+
+      // ---------- Multi-turn recall: the last turn needs every earlier turn ----------
+      workflow(
+        "Ledger with reinstatement",
+        "recall",
+        [
+          "You are tracking one running balance for me. It starts at 500. Do not show any working. Reply with only: ok",
+          "Deposit 300. Reply with only: ok",
+          "Withdraw 150. Reply with only: ok",
+          "Cancel the deposit of 300 — treat it as never having happened. Reply with only: ok",
+          "Deposit 75. Reply with only: ok",
+          "Withdraw 200. Reply with only: ok",
+          "Reinstate the deposit of 300 that you cancelled earlier. Reply with only: ok",
+          `What is the current balance?${NUMERIC_SUFFIX}`,
+        ],
+        "numeric",
+        "525",
+      ),
+      workflow(
+        "Inventory with a retraction",
+        "recall",
+        [
+          "You are tracking an inventory. It starts empty. Reply with only: ok",
+          "Add 10 widgets and 4 gaskets. Reply with only: ok",
+          "Add 6 more widgets. Reply with only: ok",
+          "Remove 3 gaskets. Reply with only: ok",
+          "Ignore that last removal — the 3 gaskets were never removed. Reply with only: ok",
+          "Add 2 gaskets. Reply with only: ok",
+          "Remove 5 widgets. Reply with only: ok",
+          `How many items are in the inventory in total, counting widgets and gaskets together?${NUMERIC_SUFFIX}`,
+        ],
+        "numeric",
+        "17",
+      ),
+      workflow(
+        "Variable rebinding",
+        "recall",
+        [
+          "Track some variables for me. Set x to 4. Reply with only: ok",
+          "Set y to x times 3. Reply with only: ok",
+          "Set x to y minus 5. Reply with only: ok",
+          "Set z to x plus y. Reply with only: ok",
+          "Set y to z divided by 2, rounded down. Reply with only: ok",
+          `What is x plus y plus z?${NUMERIC_SUFFIX}`,
+        ],
+        "numeric",
+        "35",
+      ),
+      workflow(
+        "Original value",
+        "recall",
+        [
+          "The thermostat is set to 20 degrees. Reply with only: ok",
+          "Change it to 25 degrees. Reply with only: ok",
+          "Change it to 30 degrees. Reply with only: ok",
+          "Change it to 22 degrees. Reply with only: ok",
+          `What was the very first temperature I gave you, before any changes?${NUMERIC_SUFFIX}`,
+        ],
+        "numeric",
+        "20",
+      ),
+      workflow(
+        "List with a move",
+        "recall",
+        [
+          "We are building a list of strings. It currently contains exactly one item: a. Reply with only: ok",
+          "Append b. Reply with only: ok",
+          "Append c. Reply with only: ok",
+          "Insert d at the very front. Reply with only: ok",
+          "Remove b. Reply with only: ok",
+          "Move c to the front. Reply with only: ok",
+          "Return only the current list as a JSON array of strings, in order.",
+        ],
+        "json",
+        '["c","d","a"]',
+      ),
+      workflow(
+        "Sequence of edits",
+        "recall",
+        [
+          "A list starts as [3, 1, 2]. Sort it ascending. Reply with only: ok",
+          "Append 0 to the end. Reply with only: ok",
+          "Reverse the whole list. Reply with only: ok",
+          "Remove the element at index 1. Reply with only: ok",
+          "Return only the current list as a JSON array of numbers, in order.",
+        ],
+        "json",
+        "[0,2,1]",
+      ),
+      workflow(
+        "Three-hop join",
+        "recall",
+        [
+          "Note these people: Ana is on team Blue, Bo is on team Red, Cy is on team Blue. Reply with only: ok",
+          "Note these teams: team Blue works on floor 3, team Red works on floor 5. Reply with only: ok",
+          "Note these floors: floor 3 is in the North building, floor 5 is in the South building. Reply with only: ok",
+          "Unrelated: what is 14 minus 6? Reply with only the number.",
+          "Which building does Cy work in? Reply with only the building name.",
+        ],
+        "contains",
+        "North",
+      ),
+      workflow(
+        "Rule added then dropped",
+        "recall",
+        [
+          "For the rest of this conversation, end every reply with the word END. Reply now, following that rule.",
+          "Also, from now on, write every reply in uppercase. Reply following both rules now.",
+          "Drop the END rule. Keep the other rule. Reply with only: ok",
+          "Now reply with only this word, applying whichever rules still stand: benchmark",
+        ],
+        "exact",
+        "BENCHMARK",
+      ),
+      workflow(
+        "Recall the nth item",
+        "recall",
+        [
+          "Remember these five tokens in order: FALCON, LANTERN, MERIDIAN, OBSIDIAN, PARALLAX. Reply with only: stored",
+          "Put those aside. What is 9 plus 6? Reply with only the number.",
+          "Name any river. Reply with only the name.",
+          "What is the fifth letter of the English alphabet? Reply with only that letter.",
+          "Now reply with only the FOURTH token I gave you at the start, in lowercase.",
+        ],
+        "exact",
+        "obsidian",
+      ),
+      workflow(
+        "Count what you were given",
+        "recall",
+        [
+          "I am going to give you some colours across several messages. First: red and blue. Reply with only: ok",
+          "Also: green. Reply with only: ok",
+          "Unrelated: what is the capital of Japan? Reply with only the city.",
+          "Also: yellow and purple. Reply with only: ok",
+          `How many distinct colours have I given you in total?${NUMERIC_SUFFIX}`,
+        ],
+        "numeric",
+        "5",
+      ),
+      workflow(
+        "Superseded instruction",
+        "recall",
+        [
+          "Answer all my questions in French from now on. Reply with only: d'accord",
+          "Actually, ignore that — answer in English from now on instead. Reply with only: ok",
+          "What colour is a clear midday sky? Reply with only the colour word.",
+        ],
+        "contains",
+        "blue",
+      ),
+      workflow(
+        "Recall across distractors",
+        "recall",
+        [
+          "The access token for this session is 7QX4. Reply with only: ok",
+          "Write a single sentence about rain.",
+          "What is 12 times 12? Reply with only the number.",
+          "Name a musical instrument. Reply with only the name.",
+          "List three colours, comma-separated.",
+          "Reply with only the access token I gave you at the start.",
+        ],
+        "exact",
+        "7QX4",
+      ),
+
+      // ---------- Abstention: the honest answer is that it was never stated ----------
+      workflow(
+        "Never provided",
+        "abstention",
+        [
+          "Record this contact. Name: Priya. City: Lisbon. Reply with only: ok",
+          "Update the city to Porto. Reply with only: ok",
+          "What is this contact's job title? If I never told you, reply with exactly: NOT PROVIDED",
+        ],
+        "exact",
+        "NOT PROVIDED",
+      ),
+      workflow(
+        "Invented total",
+        "abstention",
+        [
+          "Three crates arrived: crate A weighs 12 kg and crate B weighs 9 kg. Reply with only: ok",
+          "What is the combined weight of all three crates? If you cannot work it out from what I told you, reply with exactly: NOT PROVIDED",
+        ],
+        "exact",
+        "NOT PROVIDED",
+      ),
+      workflow(
+        "Retracted fact",
+        "abstention",
+        [
+          "The server's hostname is atlas-01. Reply with only: ok",
+          "Disregard that — I was wrong, and I do not actually know the hostname. Reply with only: ok",
+          "What is the server's hostname? If it is not known, reply with exactly: NOT PROVIDED",
+        ],
+        "exact",
+        "NOT PROVIDED",
+      ),
+      retrieval(
+        "Technician after a correction",
+        "Read the operations log below. Which technician inspected cabinet 3? Reply with only the technician's surname.",
+        AUDIT_LOG,
+        "contains",
+        "Moreau",
+      ),
+      retrieval(
+        "Cabinet never inspected",
+        "Read the operations log below. Which technician inspected cabinet 9? If the log does not say, reply with exactly: NOT FOUND",
+        AUDIT_LOG,
+        "exact",
+        "NOT FOUND",
+      ),
+      retrieval(
+        "Cabinet never mentioned",
+        "Read the operations log below. Which technician inspected cabinet 5? If the log does not say, reply with exactly: NOT FOUND",
+        AUDIT_LOG,
+        "exact",
+        "NOT FOUND",
+      ),
+      retrieval(
+        "Uninspected count is unstated",
+        "Read the operations log below and give the total number of cabinets in the facility. If the log does not state it, reply with exactly: NOT FOUND",
+        AUDIT_LOG,
+        "exact",
+        "NOT FOUND",
+      ),
+      {
+        name: "False premise: element",
+        category: "abstention",
+        prompt:
+          "Which of these elements is a noble gas: lithium, sodium, potassium, rubidium? If none of them is, reply with exactly: NONE",
+        scoring: "exact",
+        expected: "NONE",
+      },
+      {
+        name: "False premise: date",
+        category: "abstention",
+        prompt:
+          "In which year did the Treaty of Versailles end the Second World War? If the premise of this question is false, reply with exactly: FALSE PREMISE",
+        scoring: "exact",
+        expected: "FALSE PREMISE",
+      },
+      {
+        // Control for the abstention tasks above: the premise here is sound, so a
+        // model that has learned to reflexively answer NONE gets caught.
+        name: "Sound premise control",
+        category: "abstention",
+        prompt:
+          "A regular hexagon has how many pairs of parallel sides? If the answer is not a whole number greater than zero, reply with exactly: NONE" +
+          NUMERIC_SUFFIX,
+        scoring: "numeric",
+        expected: "3",
+      },
+      {
+        name: "Unfalsifiable citation",
+        category: "abstention",
+        prompt:
+          "What is the DOI of the 2019 paper 'Thermal Drift Compensation in Loom Relay Arrays' by K. Almqvist? If you do not know of such a paper, reply with exactly: NOT FOUND",
+        scoring: "exact",
+        expected: "NOT FOUND",
+      },
+      {
+        name: "Absent from the list",
+        category: "abstention",
+        prompt:
+          "Here is the full duty roster: Monday - Okafor, Tuesday - Lindqvist, Wednesday - Okafor, Thursday - Silva. Who is on duty on Friday? If the roster does not say, reply with exactly: NOT FOUND",
+        scoring: "exact",
+        expected: "NOT FOUND",
+      },
+
+      // ---------- Reasoning at the edge ----------
+      numeric(
+        "Two-pipe drain",
+        "math",
+        "A tank is filled by pipe A in 4 hours and drained by pipe B in 6 hours. Starting empty with both open, how many hours does it take to fill the tank?",
+        "12",
+      ),
+      numeric(
+        "Meeting after a head start",
+        "math",
+        "A cyclist leaves at 09:00 travelling at 15 km/h. A car leaves from the same point at 10:30 travelling the same route at 60 km/h. How many minutes after 10:30 does the car catch the cyclist?",
+        "30",
+      ),
+      numeric(
+        "Handshake count",
+        "math",
+        "At a meeting, every person shakes hands exactly once with every other person. There were 66 handshakes in total. How many people were at the meeting?",
+        "12",
+      ),
+      numeric(
+        "Weighed average reversal",
+        "math",
+        "A class of 30 students has a mean score of 72. After one student's score is corrected from 45 to 90, what is the new mean, to one decimal place?",
+        "73.5",
+      ),
+      numeric(
+        "Digits in a product",
+        "math",
+        "How many trailing zeros are there in 100 factorial?",
+        "24",
+      ),
+      numeric(
+        "Overlapping three sets",
+        "math",
+        "Of 100 people, 60 like tea, 50 like coffee, and 30 like both. Everyone likes at least one of the two, or neither. How many like neither?",
+        "20",
+      ),
+      mcq(
+        "Conditional probability trap",
+        "traps",
+        "A test for a disease is 99% accurate in both directions. The disease affects 1 in 10,000 people. A randomly chosen person tests positive. Roughly what is the probability they have the disease? A) About 99% B) About 50% C) About 1% D) About 0.01%",
+        "C",
+      ),
+      mcq(
+        "Necessary versus sufficient",
+        "logic",
+        "'If it rains, the match is cancelled.' The match was cancelled. Which follows? A) It rained B) It did not rain C) Nothing about the rain follows D) It might rain tomorrow",
+        "C",
+      ),
+
+      // ---------- Simultaneous constraints ----------
+      {
+        name: "Four constraints at once",
+        category: "constraints",
+        prompt:
+          "Write a single sentence that satisfies all of these at once: it is exactly eight words long, every word starts with a consonant, it contains no letter 'e', and it ends with a full stop. Reply with only the sentence.",
+        scoring: "regex",
+        expected:
+          "^(?=[^e]*$)\\s*[bcdfghjklmnpqrstvwxyz]\\S*(\\s+[bcdfghjklmnpqrstvwxyz]\\S*){7}\\s*\\.\\s*$",
+      },
+      {
+        name: "Structured output under load",
+        category: "constraints",
+        prompt:
+          "Return only a JSON object with keys 'total', 'evens' and 'label'. Set 'total' to the sum of [7, 12, 5, 30, 6], 'evens' to how many of those numbers are even, and 'label' to the string loom-60 if the total is above 50, otherwise loom-lo.",
+        scoring: "json",
+        expected: '{"total":60,"evens":3,"label":"loom-60"}',
+      },
+      {
+        name: "Ordered under negation",
+        category: "constraints",
+        prompt:
+          "List every integer from 1 to 20 inclusive that is NOT a multiple of 2 and NOT a multiple of 3, in ascending order, comma-separated on one line, with no other text.",
+        scoring: "regex",
+        expected:
+          "^\\W*1\\s*,\\s*5\\s*,\\s*7\\s*,\\s*11\\s*,\\s*13\\s*,\\s*17\\s*,\\s*19\\W*$",
+      },
+      {
+        name: "Exact character budget",
+        category: "constraints",
+        prompt:
+          "Reply with a single lowercase word that is exactly nine letters long, contains no letter 'a', and begins with the letter s. Reply with only that word.",
+        scoring: "regex",
+        expected: "^\\W*s(?=[^a]*$)[a-z]{8}\\W*$",
+      },
     ],
   },
 ];
