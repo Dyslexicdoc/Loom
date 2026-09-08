@@ -180,12 +180,18 @@ const EVENT_LOG = factLog("echo", 30, {
   27: "At 03:20 the backup generator was tested.",
 });
 
+/**
+ * Four AMBER and three RED, deliberately unequal: the two counting tasks that
+ * share this log must have different answers, so a model that counts flags
+ * without reading the colour cannot pass both.
+ */
 const FLAG_LOG = factLog("foxtrot", 30, {
   3: "Flag: AMBER.",
   9: "Flag: RED.",
   14: "Flag: AMBER.",
   19: "Flag: RED.",
   22: "Flag: AMBER.",
+  26: "Flag: AMBER.",
   29: "Flag: RED.",
 });
 
@@ -712,7 +718,8 @@ export const BUILTIN_SUITES: BuiltinSuite[] = [
         `Read the operations log below and work out the total number of crates across all pallets mentioned.${NUMERIC_SUFFIX}`,
         TALLY_LOG,
         "numeric",
-        "112",
+        // 34 + 57 + 21 + 46 — all four pallets in TALLY_LOG.
+        "158",
       ),
       retrieval(
         "Earliest event",
