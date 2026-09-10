@@ -637,3 +637,31 @@ export const mcpServers = sqliteTable("mcp_servers", {
 
 export type McpServer = typeof mcpServers.$inferSelect;
 export type McpTransport = McpServer["transport"];
+
+/**
+ * A flowchart. The Mermaid source is the source of truth — `src/lib/diagram.ts`
+ * parses it on read, so there is no derived spec to keep in sync.
+ */
+export const diagrams = sqliteTable("diagrams", {
+  id: text("id").primaryKey(),
+  title: text("title").notNull().default("Untitled diagram"),
+  /** Mermaid `flowchart` source. */
+  source: text("source").notNull().default(""),
+  /** The request the diagram was generated from, kept so it can be regenerated. */
+  prompt: text("prompt").notNull().default(""),
+  generatedBy: text("generated_by", { enum: ["model", "manual"] })
+    .notNull()
+    .default("manual"),
+  /** Model id that wrote the source (when generatedBy is "model"). */
+  model: text("model"),
+  /** Latest generation problem (e.g. the LLM was unreachable), if any. */
+  error: text("error"),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`(current_timestamp)`),
+  updatedAt: text("updated_at")
+    .notNull()
+    .default(sql`(current_timestamp)`),
+});
+
+export type DiagramRow = typeof diagrams.$inferSelect;

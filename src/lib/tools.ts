@@ -6,6 +6,7 @@ import { z } from "zod";
 import { getAllMcpTools, callMcpTool } from "./mcp";
 import { fetchReadable, searxngSearch } from "./web";
 import { searchDocuments } from "./documents";
+import { createFlowchartFromPrompt } from "./diagrams";
 
 export { stepCountIs };
 
@@ -25,6 +26,7 @@ export const BUILTIN_TOOL_KEYS = [
   "calculator",
   "currentDateTime",
   "searchDocuments",
+  "createFlowchart",
 ] as const;
 
 // ---------------------------------------------------------------------------
@@ -245,6 +247,37 @@ function buildSearchDocumentsTool() {
 }
 
 // ---------------------------------------------------------------------------
+// Built-in: draw a flowchart (saved to the Diagrams page)
+// ---------------------------------------------------------------------------
+function buildFlowchartTool() {
+  const inputSchema = z.object({
+    description: z
+      .string()
+      .describe(
+        "The process to draw: its steps, decisions, and branches. Be specific — " +
+          "this is the only thing the diagram is built from.",
+      ),
+    title: z.string().optional().describe("A short title for the diagram"),
+  });
+  type Input = z.infer<typeof inputSchema>;
+
+  return tool({
+    description:
+      "Draw a flowchart of a process and save it to the user's Diagrams page. Use this " +
+      "when the user asks for a diagram, flowchart, or a visual of how something works. " +
+      "Returns the diagram's Mermaid source and the page it was saved to.",
+    inputSchema,
+    execute: async ({ description, title }: Input) => {
+      const result = await createFlowchartFromPrompt(description, title);
+      if ("error" in result) {
+        return result;
+      }
+      return { ...result, url: `/diagrams?d=${result.id}` };
+    },
+  });
+}
+
+// ---------------------------------------------------------------------------
 // Registry
 // ---------------------------------------------------------------------------
 /**
@@ -260,6 +293,7 @@ export async function buildToolRegistry(enabledKeys?: string[]): Promise<ToolSet
     calculator: buildCalculatorTool(),
     currentDateTime: buildDateTimeTool(),
     searchDocuments: buildSearchDocumentsTool(),
+    createFlowchart: buildFlowchartTool(),
   };
 
   const mcpTools = await getAllMcpTools();
@@ -309,6 +343,12 @@ export async function listAvailableTools(): Promise<ToolMeta[]> {
       key: "searchDocuments",
       name: "searchDocuments",
       description: "Search the user's uploaded documents",
+      source: "builtin",
+    },
+    {
+      key: "createFlowchart",
+      name: "createFlowchart",
+      description: "Draw a flowchart of a process",
       source: "builtin",
     },
     ...mcp.map((t) => ({

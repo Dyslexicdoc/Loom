@@ -183,6 +183,13 @@
       "when": 1788222087736,
       "tag": "0025_messy_thor_girl",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "6",
+      "when": 1789072532334,
+      "tag": "0026_wealthy_firebrand",
+      "breakpoints": true
     }
   ]
 }
