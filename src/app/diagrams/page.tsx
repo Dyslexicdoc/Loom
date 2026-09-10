@@ -1,10 +1,7 @@
-import { Workflow } from "lucide-react";
-
-import { SidebarList } from "@/components/sidebar-list";
 import { DiagramCreate } from "@/components/diagrams/diagram-create";
+import { DiagramList } from "@/components/diagrams/diagram-list";
 import { DiagramView } from "@/components/diagrams/diagram-view";
 import { getDiagram, listDiagrams } from "@/lib/diagrams";
-import { deleteDiagramAction, renameDiagramAction } from "@/app/diagrams/actions";
 
 export const dynamic = "force-dynamic";
 
@@ -19,16 +16,9 @@ export default async function DiagramsPage({
 
   return (
     <div className="flex h-full">
-      <SidebarList
+      <DiagramList
         items={rows.map((row) => ({ id: row.id, title: row.title }))}
         activeId={active?.id}
-        icon={Workflow}
-        newLabel="New diagram"
-        emptyLabel="No diagrams yet."
-        baseHref="/diagrams"
-        hrefFor={(id) => `/diagrams?d=${id}`}
-        onRename={renameDiagramAction}
-        onDelete={deleteDiagramAction}
       />
       {active ? (
         <DiagramView

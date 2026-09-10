@@ -14,6 +14,7 @@ import {
   Library,
   NotebookPen,
   FlaskConical,
+  Braces,
   LayoutDashboard,
   GitBranch,
   Gauge,
@@ -39,6 +40,7 @@ const primaryItems: NavItem[] = [
   { href: "/diagrams", label: "Diagrams", icon: GitBranch },
   { href: "/dashboards", label: "Dashboards", icon: LayoutDashboard },
   { href: "/benchmarks", label: "Benchmarks", icon: Gauge },
+  { href: "/code", label: "Code Lab", icon: Braces },
   { href: "/opencode", label: "OpenCode", icon: SquareTerminal },
   { href: "/editor", label: "Editor", icon: NotebookPen },
   { href: "/documents", label: "Documents", icon: Library },
@@ -46,7 +48,7 @@ const primaryItems: NavItem[] = [
 ];
 
 /** Routes that render as standalone documents (print/preview), with no app chrome. */
-const CHROMELESS = ["/benchmarks/report/"];
+const CHROMELESS = ["/benchmarks/report/", "/code/present/"];
 
 function isActive(pathname: string, href: string) {
   if (href === "/") {

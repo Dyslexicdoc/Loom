@@ -176,7 +176,12 @@ export function DiagramView({ diagram }: { diagram: DiagramSummary }) {
               </ul>
             ) : null}
 
-            <Button onClick={handleSave} disabled={!dirty || isPending} className="gap-2">
+            <Button
+              variant={dirty ? "default" : "outline"}
+              onClick={handleSave}
+              disabled={!dirty || isPending}
+              className="gap-2"
+            >
               {isPending ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
               {dirty ? "Save source" : "Saved"}
             </Button>

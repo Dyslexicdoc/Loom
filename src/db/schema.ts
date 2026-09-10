@@ -665,3 +665,28 @@ export const diagrams = sqliteTable("diagrams", {
 });
 
 export type DiagramRow = typeof diagrams.$inferSelect;
+
+/**
+ * A code snippet in the Code Lab: source plus the test cases that prove it
+ * works. Both run in the browser, in a sandboxed worker.
+ */
+export const codeSnippets = sqliteTable("code_snippets", {
+  id: text("id").primaryKey(),
+  title: text("title").notNull().default("Untitled snippet"),
+  language: text("language", { enum: ["javascript", "html"] })
+    .notNull()
+    .default("javascript"),
+  source: text("source").notNull().default(""),
+  /** JSON-encoded TestCase[] (see `src/lib/code.ts`). */
+  tests: text("tests").notNull().default("[]"),
+  /** Model-written explanation of the snippet, if one has been requested. */
+  notes: text("notes"),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`(current_timestamp)`),
+  updatedAt: text("updated_at")
+    .notNull()
+    .default(sql`(current_timestamp)`),
+});
+
+export type CodeSnippetRow = typeof codeSnippets.$inferSelect;
