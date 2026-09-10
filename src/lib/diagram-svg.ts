@@ -8,12 +8,14 @@
  */
 
 import {
-  layoutDiagram,
   measureNode,
   NODE_FONT_PX,
+  routeDiagram,
   type DiagramSpec,
   type NodeShape,
+  type EdgeStyle,
   type PlacedNode,
+  type Point,
 } from "./diagram";
 
 export interface SvgTheme {
@@ -66,7 +68,8 @@ export const SVG_THEMES: Record<"neon" | "slate" | "paper", SvgTheme> = {
   },
 };
 
-function accentFor(shape: NodeShape, theme: SvgTheme): string {
+/** Outline colour by node role — shared with the PowerPoint exporter. */
+export function accentFor(shape: NodeShape, theme: SvgTheme): string {
   switch (shape) {
     case "rounded":
     case "stadium":
@@ -91,8 +94,6 @@ const SKEW = 16;
 const FONT =
   "ui-sans-serif, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
 const LINE_HEIGHT = 18;
-/** How far a loop-back edge stands off from the boxes it routes around. */
-const LANE_GAP = 28;
 const CORNER = 8;
 
 function esc(text: string): string {
@@ -149,17 +150,14 @@ function labelElement(node: PlacedNode, theme: SvgTheme): string {
   const cx = node.x + node.width / 2;
   const top = node.y + node.height / 2 - ((lines.length - 1) * LINE_HEIGHT) / 2;
   const tspans = lines
-    .map((line, i) => `<tspan x="${cx}" y="${top + i * LINE_HEIGHT}">${esc(line)}</tspan>`)
+    .map(
+      (line, i) => `<tspan x="${cx}" y="${top + i * LINE_HEIGHT}">${esc(line)}</tspan>`,
+    )
     .join("");
   return (
     `<text text-anchor="middle" dominant-baseline="central" font-family="${FONT}" ` +
     `font-size="${NODE_FONT_PX}" font-weight="500" fill="${theme.text}">${tspans}</text>`
   );
-}
-
-interface Point {
-  x: number;
-  y: number;
 }
 
 /** Joins waypoints into a path with rounded corners. */
@@ -198,124 +196,6 @@ function r(value: number): number {
   return Math.round(value * 10) / 10;
 }
 
-/**
- * Spreads each node's edges across the side they share, ordered by `position` so
- * the lines fan out without crossing. Returns edge id → fraction of that side.
- */
-function slotsBy<T extends { edge: { id: string } }>(
-  items: T[],
-  keyOf: (item: T) => string,
-  position: (item: T) => number,
-): Map<string, number> {
-  const byNode = new Map<string, T[]>();
-  for (const item of items) {
-    const key = keyOf(item);
-    const list = byNode.get(key);
-    if (list) list.push(item);
-    else byNode.set(key, [item]);
-  }
-  const out = new Map<string, number>();
-  for (const list of byNode.values()) {
-    const ordered = [...list].sort((a, b) => position(a) - position(b));
-    for (const [index, item] of ordered.entries()) {
-      out.set(item.edge.id, (index + 1) / (ordered.length + 1));
-    }
-  }
-  return out;
-}
-
-/**
- * Routes one edge orthogonally. Forward edges take the short way between the
- * facing sides; an edge running back against the flow gets its own lane clear of
- * both boxes, the way a hand-drawn flowchart loops back.
- *
- * `exit` and `entry` spread the attachment points across each side, so the three
- * branches out of a decision leave from three places rather than piling onto one.
- */
-function routeEdge(
-  source: PlacedNode,
-  target: PlacedNode,
-  vertical: boolean,
-  reversed: boolean,
-  forward: boolean,
-  exit: number,
-  entry: number,
-): Point[] {
-  const sMid = { x: source.x + source.width / 2, y: source.y + source.height / 2 };
-  const tMid = { x: target.x + target.width / 2, y: target.y + target.height / 2 };
-
-  if (vertical) {
-    if (forward) {
-      const sx = source.x + source.width * exit;
-      const tx = target.x + target.width * entry;
-      const sy = reversed ? source.y : source.y + source.height;
-      const ty = reversed ? target.y + target.height : target.y;
-      if (Math.abs(sx - tx) < 2) {
-        return [
-          { x: sx, y: sy },
-          { x: sx, y: ty },
-        ];
-      }
-      const mid = (sy + ty) / 2;
-      return [
-        { x: sx, y: sy },
-        { x: sx, y: mid },
-        { x: tx, y: mid },
-        { x: tx, y: ty },
-      ];
-    }
-    const lane = Math.max(source.x + source.width, target.x + target.width) + LANE_GAP;
-    return [
-      { x: source.x + source.width, y: sMid.y },
-      { x: lane, y: sMid.y },
-      { x: lane, y: tMid.y },
-      { x: target.x + target.width, y: tMid.y },
-    ];
-  }
-
-  if (forward) {
-    const sy = source.y + source.height * exit;
-    const ty = target.y + target.height * entry;
-    const sx = reversed ? source.x : source.x + source.width;
-    const tx = reversed ? target.x + target.width : target.x;
-    if (Math.abs(sy - ty) < 2) {
-      return [
-        { x: sx, y: sy },
-        { x: tx, y: ty },
-      ];
-    }
-    const mid = (sx + tx) / 2;
-    return [
-      { x: sx, y: sy },
-      { x: mid, y: sy },
-      { x: mid, y: ty },
-      { x: tx, y: ty },
-    ];
-  }
-  const lane = Math.max(source.y + source.height, target.y + target.height) + LANE_GAP;
-  return [
-    { x: sMid.x, y: source.y + source.height },
-    { x: sMid.x, y: lane },
-    { x: tMid.x, y: lane },
-    { x: tMid.x, y: target.y + target.height },
-  ];
-}
-
-/**
- * Anchors an edge label near where the edge leaves its source, which is where a
- * reader looks to tell two branches apart. Falls back to the path midpoint when
- * the first segment is too short to hold it.
- */
-function labelPoint(points: Point[]): Point {
-  const [first, second] = points;
-  if (points.length > 2 && Math.hypot(second.x - first.x, second.y - first.y) >= 26) {
-    return { x: (first.x + second.x) / 2, y: (first.y + second.y) / 2 };
-  }
-  const mid = points[Math.floor(points.length / 2)];
-  const prev = points[Math.max(0, Math.floor(points.length / 2) - 1)];
-  return { x: (mid.x + prev.x) / 2, y: (mid.y + prev.y) / 2 };
-}
-
 /** A text box with the page colour behind it, so lines never run through words. */
 function chip(text: string, at: Point, theme: SvgTheme): string {
   const width = text.length * 6.2 + 10;
@@ -340,37 +220,7 @@ export interface SvgOptions {
 export function diagramToSvg(spec: DiagramSpec, options: SvgOptions = {}): string {
   const theme = options.theme ?? SVG_THEMES.neon;
   const padding = options.padding ?? 24;
-  const layout = layoutDiagram(spec);
-  const byId = new Map(layout.nodes.map((n) => [n.id, n]));
-  const vertical = spec.direction === "TB" || spec.direction === "BT";
-  const reversed = spec.direction === "BT" || spec.direction === "RL";
-
-  // Decide direction first: only forward edges take a slot on the facing side.
-  const routable = spec.edges.flatMap((edge) => {
-    const source = byId.get(edge.source);
-    const target = byId.get(edge.target);
-    if (!source || !target || source === target) return [];
-    const along = vertical
-      ? target.y + target.height / 2 - (source.y + source.height / 2)
-      : target.x + target.width / 2 - (source.x + source.width / 2);
-    return [{ edge, source, target, forward: reversed ? along < 0 : along > 0 }];
-  });
-
-  // Attachment points are handed out in cross-axis order, not declaration order,
-  // so the leftmost branch leaves from the leftmost slot and the lines never
-  // cross each other on the way out of a decision.
-  const across = (node: PlacedNode) =>
-    vertical ? node.x + node.width / 2 : node.y + node.height / 2;
-  const exits = slotsBy(
-    routable.filter((item) => item.forward),
-    (item) => item.edge.source,
-    (item) => across(item.target),
-  );
-  const entries = slotsBy(
-    routable.filter((item) => item.forward),
-    (item) => item.edge.target,
-    (item) => across(item.source),
-  );
+  const layout = routeDiagram(spec);
 
   const parts: string[] = [];
   if (options.paintBackground !== false) {
@@ -396,19 +246,8 @@ export function diagramToSvg(spec: DiagramSpec, options: SvgOptions = {}): strin
   }
 
   const markers = new Map<string, string>();
-  for (const { edge, source, target, forward } of routable) {
-    const colour =
-      edge.style === "thick" ? theme.call : edge.style === "dotted" ? theme.data : theme.step;
-
-    const points = routeEdge(
-      source,
-      target,
-      vertical,
-      reversed,
-      forward,
-      exits.get(edge.id) ?? 0.5,
-      entries.get(edge.id) ?? 0.5,
-    );
+  for (const edge of layout.edges) {
+    const colour = edgeColour(edge.style, theme);
     const dash = edge.style === "dotted" ? ' stroke-dasharray="5 4"' : "";
     const strokeWidth = edge.style === "thick" ? 2.6 : 1.6;
 
@@ -423,10 +262,10 @@ export function diagramToSvg(spec: DiagramSpec, options: SvgOptions = {}): strin
       marker = ` marker-end="url(#${id})"`;
     }
     parts.push(
-      `<path d="${roundedPath(points)}" fill="none" stroke="${colour}" stroke-width="${strokeWidth}"${dash}${marker}/>`,
+      `<path d="${roundedPath(edge.points)}" fill="none" stroke="${colour}" stroke-width="${strokeWidth}"${dash}${marker}/>`,
     );
-    if (edge.label) {
-      parts.push(chip(edge.label, labelPoint(points), theme));
+    if (edge.label && edge.labelAt) {
+      parts.push(chip(edge.label, edge.labelAt, theme));
     }
   }
 
@@ -452,4 +291,11 @@ export function diagramToSvg(spec: DiagramSpec, options: SvgOptions = {}): strin
     `<svg xmlns="http://www.w3.org/2000/svg" width="${r(width)}" height="${r(height)}" ` +
     `viewBox="0 0 ${r(width)} ${r(height)}" role="img">${defs}${parts.join("")}</svg>`
   );
+}
+
+/** Edge colour by style — shared with the PowerPoint exporter. */
+export function edgeColour(style: EdgeStyle, theme: SvgTheme): string {
+  if (style === "thick") return theme.call;
+  if (style === "dotted") return theme.data;
+  return theme.step;
 }

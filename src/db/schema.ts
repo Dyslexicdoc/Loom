@@ -186,7 +186,15 @@ export const researchReports = sqliteTable(
     /** Final report markdown. */
     report: text("report").notNull().default(""),
     status: text("status", {
-      enum: ["planning", "searching", "reading", "reflecting", "writing", "done", "error"],
+      enum: [
+        "planning",
+        "searching",
+        "reading",
+        "reflecting",
+        "writing",
+        "done",
+        "error",
+      ],
     })
       .notNull()
       .default("planning"),
@@ -443,7 +451,9 @@ export type BenchmarkSuite = typeof benchmarkSuites.$inferSelect;
 export const benchmarkRuns = sqliteTable("benchmark_runs", {
   id: text("id").primaryKey(),
   title: text("title").notNull().default("Benchmark run"),
-  suiteId: text("suite_id").references(() => benchmarkSuites.id, { onDelete: "set null" }),
+  suiteId: text("suite_id").references(() => benchmarkSuites.id, {
+    onDelete: "set null",
+  }),
   suiteName: text("suite_name").notNull().default(""),
   /** JSON-encoded string[] of the compared model ids. */
   models: text("models").notNull().default("[]"),
@@ -690,3 +700,34 @@ export const codeSnippets = sqliteTable("code_snippets", {
 });
 
 export type CodeSnippetRow = typeof codeSnippets.$inferSelect;
+
+/**
+ * A slide deck. Like a diagram, the source of truth is text — the Markdown
+ * outline — and `src/lib/deck.ts` parses it into slides on read.
+ */
+export const decks = sqliteTable("decks", {
+  id: text("id").primaryKey(),
+  title: text("title").notNull().default("Untitled deck"),
+  /** The Markdown outline the deck is built from. */
+  source: text("source").notNull().default(""),
+  /** The request the deck was generated from, kept so it can be regenerated. */
+  prompt: text("prompt").notNull().default(""),
+  theme: text("theme", { enum: ["neon", "slate", "paper"] })
+    .notNull()
+    .default("neon"),
+  generatedBy: text("generated_by", { enum: ["model", "manual"] })
+    .notNull()
+    .default("manual"),
+  /** Model id that wrote the outline (when generatedBy is "model"). */
+  model: text("model"),
+  /** Latest generation problem (e.g. the LLM was unreachable), if any. */
+  error: text("error"),
+  createdAt: text("created_at")
+    .notNull()
+    .default(sql`(current_timestamp)`),
+  updatedAt: text("updated_at")
+    .notNull()
+    .default(sql`(current_timestamp)`),
+});
+
+export type DeckRow = typeof decks.$inferSelect;

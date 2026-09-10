@@ -1,24 +1,30 @@
 # Loom
 
-
 <img width="1464" height="781" alt="image" src="https://github.com/user-attachments/assets/69030c54-ea33-4546-98a2-4603f00d5388" />
 
-
-
-
-
 A personal, **local-first** web UI for your own local LLM. Everything runs on your machine — no cloud services, no telemetry, no accounts.
+
+## 🎞️ New: Slides, Diagrams & Code Lab
+
+Three tabs that turn what the model knows into something you can put in front of people:
+
+- **Slides** — describe a talk and Loom writes the deck. The outline is plain **Markdown** (`---` between slides), and each slide's layout is inferred from what it contains: bullets, a two-column comparison, a stats row, a quote, a table, a **flowchart**, or **code that actually runs while you present**. Present full-screen with keyboard control and speaker notes, or export the whole thing as a **real `.pptx`** — native PowerPoint shapes and text frames, not a screenshot, so it stays editable. Diagram slides export as PowerPoint's own flowchart shapes.
+- **Diagrams** — describe a process and get a flowchart: decisions with labelled branches, datastores, subprocesses, and subgraphs. Stored as **Mermaid source** you can edit by hand, previewed live as you type, and exported as PNG, SVG, or `.mmd`.
+- **Code Lab** — write or generate a snippet, **run it** in a sandboxed Web Worker, and hold it to **test cases the model writes from the code itself**. Failing? Hand the actual failures back with **Fix failures**. HTML snippets render in a sandboxed frame. Present any snippet full-screen with its walkthrough and its tests running live.
 
 ## 📊 New: Dashboards & Benchmarks
 
 Two new tabs join the workspace:
 
+- **Slides** — describe a talk and the model writes the deck as a Markdown outline; layouts are inferred from content (bullets, two-column, stats, quote, table, flowchart, code). Present full-screen with keyboard control and speaker notes — **code slides tagged `run` execute live during the talk** — or export **real PowerPoint** (`.pptx`) built from native shapes, including flowcharts drawn with PowerPoint's own flowchart shapes
+- **Diagrams** — describe a process and get a flowchart with the right shapes: decisions with labelled branches, datastores, subprocesses, subgraphs. Stored as editable **Mermaid** source with a live preview, and exported as PNG, SVG, or `.mmd`
+- **Code Lab** — write or generate a snippet, **run it** in a sandboxed Web Worker (no DOM, no network to your app, killable mid-loop), and prove it works against **test cases the model writes from the code**. **Fix failures** hands the model what actually broke; **Present** shows the code, its walkthrough, and its tests running
 - **Dashboards** — turn any **Markdown into a live dashboard**: paste text, upload a `.md` file, or pick an Editor document, and the model extracts its numbers, tables, and lists into a structured spec rendered with Loom's own theme-native widgets — KPI stat tiles, bar/line/area/donut charts (hover tooltips + a table-view twin per chart), tables, checklists, callouts, and meters. When the model is unreachable a deterministic Markdown parser builds the dashboard instead (with a clear notice), so it always renders; edit the source or add guidance and **Regenerate** anytime.
-- **Benchmarks** — race up to 5 models (local + cloud, mixed) through **standardized or custom benchmark suites** and compare them with live charts: a leaderboard with **95% confidence intervals** (and a *tied* badge when a gap isn't statistically real), overall + per-category accuracy, a per-request **encode → queue → prefill → decode** breakdown, latency distributions (median/p95/spread), **decode + prefill tokens/sec, TPOT and inter-token jitter**, radar profiles, an accuracy-vs-speed scatter, a task × model heatmap, and self-reported **cost estimates** ($/run and $/1M tokens from your machine's $/hr rate). An **Analysis** section says what the scores are made of — a **failure taxonomy** (wrong answer / format miss / refusal / cut off / empty / timeout / error), a **head-to-head diff** of exactly which tasks one model wins and the other loses, and a **raw CSV/JSON export** of every sample. Plus repeats to average out sampling noise, **temperature sweeps**, a **parallel-load probe**, a pinnable **baseline** that shows later runs as deltas, **resume** for a cancelled run, a sortable/filterable per-task matrix with every model's raw output, a **History** view trending any metric across runs, and a one-click **PDF export**. Seven built-in auto-scored suites (92 tasks) ship out of the box — deliberately hard, so models actually separate — covering reasoning, knowledge, instruction following, long-context retrieval, **multi-turn long workflows**, and timing-only **Speed & Latency** probes; custom suites support exact/contains/numeric/regex/multiple-choice/JSON scoring, an LLM-as-judge mode, timing-only tasks, and **multi-turn prompts**.
+- **Benchmarks** — race up to 5 models (local + cloud, mixed) through **standardized or custom benchmark suites** and compare them with live charts: a leaderboard with **95% confidence intervals** (and a _tied_ badge when a gap isn't statistically real), overall + per-category accuracy, a per-request **encode → queue → prefill → decode** breakdown, latency distributions (median/p95/spread), **decode + prefill tokens/sec, TPOT and inter-token jitter**, radar profiles, an accuracy-vs-speed scatter, a task × model heatmap, and self-reported **cost estimates** ($/run and $/1M tokens from your machine's $/hr rate). An **Analysis** section says what the scores are made of — a **failure taxonomy** (wrong answer / format miss / refusal / cut off / empty / timeout / error), a **head-to-head diff** of exactly which tasks one model wins and the other loses, and a **raw CSV/JSON export** of every sample. Plus repeats to average out sampling noise, **temperature sweeps**, a **parallel-load probe**, a pinnable **baseline** that shows later runs as deltas, **resume** for a cancelled run, a sortable/filterable per-task matrix with every model's raw output, a **History** view trending any metric across runs, and a one-click **PDF export**. Seven built-in auto-scored suites (92 tasks) ship out of the box — deliberately hard, so models actually separate — covering reasoning, knowledge, instruction following, long-context retrieval, **multi-turn long workflows**, and timing-only **Speed & Latency** probes; custom suites support exact/contains/numeric/regex/multiple-choice/JSON scoring, an LLM-as-judge mode, timing-only tasks, and **multi-turn prompts**.
 
 ## 🧪 New: Experimental Agent (bidirectional goal-convergence)
 
-A new **Experimental Agent** tab runs a *meet-in-the-middle* search between a **start** state and a **goal** state. Three roles work together: a **Forward agent** builds outward from the start, a **Backward agent** regresses from the goal, and a **Reconciler** detects where the two frontiers meet and stitches the full **START → … → GOAL** path (Dijkstra-flavored: it expands the cheapest frontier node first and prefers the lowest-cost meeting).
+A new **Experimental Agent** tab runs a _meet-in-the-middle_ search between a **start** state and a **goal** state. Three roles work together: a **Forward agent** builds outward from the start, a **Backward agent** regresses from the goal, and a **Reconciler** detects where the two frontiers meet and stitches the full **START → … → GOAL** path (Dijkstra-flavored: it expands the cheapest frontier node first and prefers the lowest-cost meeting).
 
 What it does:
 
@@ -54,7 +60,7 @@ Tabs (built phase by phase — see `PLAN.md`):
 - **Agents** — chat that calls tools (built-in + MCP) in an agent loop
 - **Deep Research** — plan → search (SearXNG) → read → **cited report**, with live staged progress and a numbered source list matching the inline `[n]` citations
 - **Experimental Agent** — bidirectional goal-convergence search (Forward + Backward agents + Reconciler) that meets in the middle to stitch a START → GOAL path, **grounded in live SearXNG + Firecrawl** evidence; auto-builds a Canvas of the taken path, or recommends alternatives when no path is found (see above)
-- **Canvas** — a React Flow whiteboard for connected ideas: editable idea/heading nodes, free-form connections, drag/pan/zoom/multi-select, one-click **dagre auto-layout**, and debounced autosave. **Talk to canvas** — a board-aware chat that answers questions about the graph *and* edits it live (add / connect / rename / remove nodes). **Send to Canvas** (from Chat, Agents, or Deep Research) asks the model to distill the session into a concept map and seeds a new board
+- **Canvas** — a React Flow whiteboard for connected ideas: editable idea/heading nodes, free-form connections, drag/pan/zoom/multi-select, one-click **dagre auto-layout**, and debounced autosave. **Talk to canvas** — a board-aware chat that answers questions about the graph _and_ edits it live (add / connect / rename / remove nodes). **Send to Canvas** (from Chat, Agents, or Deep Research) asks the model to distill the session into a concept map and seeds a new board
 - **Dashboards** — turn any **Markdown into a live dashboard**: paste text, upload a `.md` file, or pick an Editor document, and the model extracts its numbers, tables, and lists into a structured spec rendered with native widgets — KPI stat tiles, bar/line/area/donut charts (hover tooltips + a table-view twin per chart), tables, checklists, callouts, and meters. When the model is unreachable a deterministic Markdown parser builds the dashboard instead (with a clear notice), so it always renders; edit the source or add guidance and **Regenerate** anytime
 - **Benchmarks** — race up to 5 models (local + cloud, mixed) through **standardized or custom benchmark suites** and compare them with live charts: a leaderboard with confidence intervals, accuracy, a per-request encode/queue/prefill/decode breakdown, latency distributions, decode + prefill throughput, TPOT and inter-token jitter, radar profiles, an accuracy-vs-speed scatter, a per-task heatmap, a failure taxonomy and head-to-head diff, self-reported cost estimates, raw CSV/JSON export, temperature sweeps, a parallel-load probe, baseline pinning, resume, and a cross-run History view. Seven built-in auto-scored suites, deliberately hard so models actually separate (incl. long-context retrieval, multi-turn long workflows, and timing-only Speed & Latency); custom suites support deterministic scoring, an LLM-as-judge mode, timing-only tasks, and multi-turn prompts
 - **OpenCode** — drive the [opencode](https://github.com/sst/opencode) coding agent to actually build/run projects on your machine. Add a project folder as a workspace, give it a task, and watch it work; **Send to OpenCode** turns a Chat/Agent/Research/Canvas session into a build task. Loom manages a local `opencode serve` for you
@@ -69,7 +75,7 @@ Tabs (built phase by phase — see `PLAN.md`):
 >   - **Personas** — a reusable library of named identities/system prompts (seeded with Loom, Senior Engineer, Skeptic, Researcher); assign one per session, with full create/edit/delete
 >   - **Self-dialogue** — the agent can debate itself (**Solver ↔ Critic**) for a configurable number of rounds before answering; the debate streams as collapsible reasoning, then a final synthesis answers with tools. Each voice can be cast from a persona
 > - **Memory** — durable facts with embeddings-based dedupe/retrieval, injected into every session; add/edit/delete/pin; on-demand extraction from chats
-> - **Tools** — built-in `searchWeb` (SearXNG), `readUrl` (fetch a page → readable text), `calculator`, and `currentDateTime`, wired into Chat and Agents; MCP servers (stdio + SSE/HTTP) managed from Settings, tools auto-loaded into the assistant. Tool calls and reasoning are persisted, so they replay when you reopen a conversation.
+> - **Tools** — built-in `searchWeb` (SearXNG), `readUrl` (fetch a page → readable text), `calculator`, `currentDateTime`, `searchDocuments`, `createFlowchart` (draws a diagram and saves it to the Diagrams tab), and `createSlideDeck` (builds a deck and saves it to the Slides tab), wired into Chat and Agents; MCP servers (stdio + SSE/HTTP) managed from Settings, tools auto-loaded into the assistant. Tool calls and reasoning are persisted, so they replay when you reopen a conversation.
 >
 > For Memory's semantic features, set an **embeddings model** in Settings (e.g. `nomic-embed-text` / `text-embedding-*` exposed by LM Studio/Ollama). Without one, memories still work but use exact-text dedupe and recent/pinned retrieval.
 >
@@ -253,16 +259,16 @@ Notes:
 
 ## Scripts
 
-| Command | Purpose |
-|---|---|
-| `npm run dev` | Dev server (http://localhost:3000) |
-| `npm run dev:lan` / `npm run start:lan` | Same, but listening on the whole LAN (`-H 0.0.0.0`) |
-| `npm run build` / `npm run start` | Production build / serve |
-| `npm run lint` / `npm run typecheck` | ESLint / TypeScript |
-| `npm run format` | Prettier write |
-| `npm run db:generate` | Generate a migration from `src/db/schema.ts` |
-| `npm run db:migrate` | Apply migrations to `./data/loom.db` (also done on app start) |
-| `npm run db:studio` | Inspect the DB in Drizzle Studio |
+| Command                                 | Purpose                                                       |
+| --------------------------------------- | ------------------------------------------------------------- |
+| `npm run dev`                           | Dev server (http://localhost:3000)                            |
+| `npm run dev:lan` / `npm run start:lan` | Same, but listening on the whole LAN (`-H 0.0.0.0`)           |
+| `npm run build` / `npm run start`       | Production build / serve                                      |
+| `npm run lint` / `npm run typecheck`    | ESLint / TypeScript                                           |
+| `npm run format`                        | Prettier write                                                |
+| `npm run db:generate`                   | Generate a migration from `src/db/schema.ts`                  |
+| `npm run db:migrate`                    | Apply migrations to `./data/loom.db` (also done on app start) |
+| `npm run db:studio`                     | Inspect the DB in Drizzle Studio                              |
 
 ## MCP servers
 
@@ -322,12 +328,12 @@ The **Editor** tab is a distraction-light Markdown editor with a live preview, b
 
 The **Benchmarks** tab races local and cloud models through the same task set and charts the results — accuracy, per-category strengths, and a full performance breakdown: every request is split into **encode → queue → prefill → decode**, with throughput, percentiles, and inter-token jitter on top.
 
-Each task can be asked several times, so accuracy is reported as a **95% confidence interval** rather than a bare percentage, and a gap that is not statistically real is badged *tied*. Pin one run as the **baseline** and later runs of the same suite show what they gained or lost against it:
+Each task can be asked several times, so accuracy is reported as a **95% confidence interval** rather than a bare percentage, and a gap that is not statistically real is badged _tied_. Pin one run as the **baseline** and later runs of the same suite show what they gained or lost against it:
 
 ![Benchmark run view: leaderboard with confidence intervals and baseline deltas across five local models](docs/screenshots/benchmarks-run.png)
 
 Every request is split into four measured phases that add up to the response
-time, so it is obvious whether a model is slow to *start* or slow to *finish*:
+time, so it is obvious whether a model is slow to _start_ or slow to _finish_:
 
 ![Request phase breakdown: encode, queue, prefill and decode per model](docs/screenshots/benchmarks-phases.png)
 
@@ -342,7 +348,7 @@ inline, so "both 80%" stops hiding the fact that they fail on different things:
 
 ![Head-to-head diff between two models, with each losing reply shown inline](docs/screenshots/benchmarks-analysis.png)
 
-Failures are bucketed by *kind*, which separates a model that is wrong from one
+Failures are bucketed by _kind_, which separates a model that is wrong from one
 that is right in a shape the scorer won't take — the second is a prompt fix, not
 a model swap:
 
@@ -363,11 +369,11 @@ Any run can be exported as a PDF, with the sections you choose:
 
 ![Export PDF tab with section toggles and a live report preview](docs/screenshots/benchmarks-export.png)
 
-- **Pick any mix of models** — everything your local endpoints expose (both LM Studio *and* Ollama, if you run [two local servers](#running-two-local-servers-at-once)), curated cloud models for each provider with an API key, or any free-text model id (up to 5 per run). Requests run one at a time so latency and tokens/sec stay uncontended and honest, and every model gets a discarded **warmup request** first so weight-loading never lands in the first timed task (its cold start is reported separately).
-- **Standardized suites** — seven built-in, deterministically auto-scored suites (92 tasks), tuned to *separate* models rather than to be passed:
+- **Pick any mix of models** — everything your local endpoints expose (both LM Studio _and_ Ollama, if you run [two local servers](#running-two-local-servers-at-once)), curated cloud models for each provider with an API key, or any free-text model id (up to 5 per run). Requests run one at a time so latency and tokens/sec stay uncontended and honest, and every model gets a discarded **warmup request** first so weight-loading never lands in the first timed task (its cold start is reported separately).
+- **Standardized suites** — seven built-in, deterministically auto-scored suites (92 tasks), tuned to _separate_ models rather than to be passed:
   - **Quick Check** (10) — a fast spread over arithmetic, reasoning traps, format control, and extraction with distractors. Short answers, so it still finishes quickly on a slow model.
   - **Reasoning & Math** (18) — multi-step word problems, probability, base conversion, geometry, constraint puzzles, and traps where one slip changes the answer.
-  - **General Knowledge** (18) — multiple choice with plausible distractors and planted misconceptions (the universal *plasma* donor is not the universal red-cell donor; a tritone is not a fifth).
+  - **General Knowledge** (18) — multiple choice with plausible distractors and planted misconceptions (the universal _plasma_ donor is not the universal red-cell donor; a tritone is not a fifth).
   - **Instruction Following** (14) — exact word counts, a forbidden letter, precise separators, deeply nested JSON, an acrostic, a substitution list, and a twelve-word sentence with no letter `s`. Tests control of the output; a model that adds a preamble scores zero.
   - **Long Context & Retrieval** (12) — questions over 3,700–5,000-token logs: buried facts, near-identical distractors (`RT-1180` vs `RT-1108`), a two-hop join, a value superseded by a later correction, selective counting, and `NOT FOUND` when the fact genuinely isn't there.
   - **Long Workflows** (10) — **multi-turn procedures of 4–7 turns each**: a running ledger with a cancelled transaction, inventory edits, a format rule that must hold for the whole conversation, a rule that is later retracted, conflicting profile updates, a fact join across turns, and a calculation chain where every step feeds the next. Only the final answer is scored and it needs every earlier turn, so drifting once ends the task. The closest thing here to real agent work.
@@ -376,12 +382,13 @@ Any run can be exported as a PDF, with the sections you choose:
   A benchmark everything passes measures nothing, so these are deliberately hard — expect capable local models to land well short of 100%, and weak ones near the floor. Scoring never depends on a model's opinion, so results stay comparable across runs.
 
   > **Runtime:** Quick Check is seconds per model; Long Workflows issues ~56 requests per model (every turn is a request) and Long Context sends 3,700–5,000-token prompts, so both take meaningfully longer. Run those two when you want depth, not on every iteration.
+
 - **Phase-level metrics** — every request is instrumented at the HTTP boundary, so each result records **encode** (building and serializing the request), **queue** (on the wire until the server answers), **prefill** (prompt evaluation up to the first token), and **decode** (generation) — four phases that add up exactly to the response time. From those come TTFT, decode tok/s (post-TTFT time only), **prefill tok/s**, **TPOT** (time per output token), and **inter-token latency** p50/p95 for stutter.
 - **Repeats and confidence intervals** — set **samples per task** (1–10) and every task is asked that many times. Accuracy is then reported as a Wilson 95% interval rather than a bare percentage, ranks whose intervals overlap the leader's are badged **tied**, and the task matrix shows the honest split (`3/5`, not a checkmark). A single sample cannot tell 70% from 75%; five can.
-- **Analysis — head-to-head** — pick any two models and see the tasks split four ways: A ahead, B ahead, both clean, level-and-neither-clean. Compared on *pass rate*, so with repeats a 5/5 against a 3/5 still counts. Each row shows the losing model's actual reply.
+- **Analysis — head-to-head** — pick any two models and see the tasks split four ways: A ahead, B ahead, both clean, level-and-neither-clean. Compared on _pass rate_, so with repeats a 5/5 against a 3/5 still counts. Each row shows the losing model's actual reply.
 - **Analysis — failure taxonomy** — every failed sample is bucketed: **wrong answer**, **format miss**, **refused**, **cut off**, **empty reply**, **timed out**, **request failed**. A format miss means the right answer was in the reply but not in a shape the scorer accepts (a number buried in prose, an MCQ letter the extractor passed over, JSON written as text, an answer wrapped in a preamble) — claimed only on unambiguous evidence, because it excuses the model. A pile of them is a prompt problem; a pile of wrong answers is a model problem. An **unstable tasks** count shows how many tasks the model neither always passed nor always failed.
 - **Raw export** — `GET /api/benchmark/<run>/export?format=csv|json` (and two buttons in the UI) return one row per model × task × repeat with the full output, the four phase timings, token counts and the failure kind. RFC 4180 quoted, so outputs containing commas and newlines survive the trip to a spreadsheet.
-- **Temperature sweep** — enter two or more temperatures and each model runs once per step, appearing on the leaderboard as its own variant (`llama3.2:3b @ t0.8`). Every view — charts, head-to-head, heatmap, PDF — treats the variants as models, so the cost of sampling on *your* suite is visible in one run.
+- **Temperature sweep** — enter two or more temperatures and each model runs once per step, appearing on the leaderboard as its own variant (`llama3.2:3b @ t0.8`). Every view — charts, head-to-head, heatmap, PDF — treats the variants as models, so the cost of sampling on _your_ suite is visible in one run.
 - **Parallel-load probe** — optional, and run after the task loop on its own prompt so contended requests can never land inside a timed task. Reports aggregate throughput at 1, 2 and 4 requests in flight: if it stays flat, the server is queueing rather than serving in parallel.
 - **Baselines and resume** — pin any finished run as the **baseline** and later runs of the same suite show accuracy and latency deltas per model. A cancelled or failed run can be **resumed**: only the cells that never finished are re-run, the original start time is kept so the cost estimate still spans the whole thing, and a cold start already measured is not measured again.
 - **Comparison charts** — a stacked phase breakdown, box-and-whisker spreads for response time / TTFT / decode speed (median, quartiles, p95, min–max), a median→p95 inter-token dumbbell, per-model **radar profiles** scaled to the run's best, an accuracy-against-speed scatter for the quality/latency trade-off, and a task × model **heatmap** you can switch between seven metrics. Every chart has an **All metrics** table twin — no number is hover-only.
@@ -390,7 +397,7 @@ Any run can be exported as a PDF, with the sections you choose:
 - **Drill down** — the task matrix is sortable and filterable (category, passed/failed, per-model score); click a row to see the prompt, the expected answer, and every model's raw output with timing.
 - **History** — a cross-run view trends any of eleven metrics (accuracy, decode/prefill throughput, TTFT, prefill and decode time, TPOT, mean and p95 response time, spread, cost) over time, plus a **last run against the one before** view for spotting regressions, above a sortable table of every past result. Runs that compared different model sets still trend whatever they share.
 - **Export PDF** — turn any run into a printable report: pick the run, toggle which sections it carries (leaderboard, latency breakdown, distributions, throughput, all-metrics table, per-task results, cost), preview the exact document, and save it. The report renders on a light paper surface with its own validated palette, paginates properly, and is produced entirely by your browser's print dialog — nothing is uploaded anywhere.
-- **Cost estimates** — set your machine's **$ per hour** in Settings (watts × $/kWh is a good starting point) and each run shows an estimated compute cost plus an estimated **$ per 1K/1M tokens** from the measured speed, with a what-if calculator to compare against hosted-API pricing. Self-reported and clearly labelled — local inference is never metered.
+- **Cost estimates** — set your machine's **$ per hour** in Settings (watts × $/kWh is a good starting point) and each run shows an estimated compute cost plus an estimated **$ per 1K/1M tokens\*\* from the measured speed, with a what-if calculator to compare against hosted-API pricing. Self-reported and clearly labelled — local inference is never metered.
 
 ## Dashboards (Markdown → dashboard)
 
@@ -401,6 +408,35 @@ The **Dashboards** tab turns a Markdown document into a dashboard rendered with 
 - **Readable charts** — a colorblind-validated palette derived from the app's neon hues, hover tooltips on every mark, and a one-click **table view** twin per chart.
 - **Always renders** — if the model is down or returns junk, a deterministic parser builds the dashboard from the Markdown structure itself (headings → sections, numeric tables → charts, `Label: value` lists → KPI rows) and the header says so; hit **Regenerate** once your LLM is back.
 - **Iterate** — open **Source** to edit the Markdown or add guidance ("focus on the revenue numbers") and regenerate; a failed regenerate keeps the previous dashboard.
+
+## Slides (outline → deck → PowerPoint)
+
+The **Slides** tab builds decks you can actually give, and hand over afterwards.
+
+- **Markdown is the deck.** Slides are separated by `---`, and each slide's layout comes from what it contains rather than a schema you have to learn: `##` + bullets is a bullets slide, two `###` sections is a two-column comparison, bullets shaped `**42%** — what it measures` is a stats row, a lone `>` is a quote, a table is a table, a ` ```mermaid ` block is a flowchart, and a fenced code block is a code slide. End a slide with `Notes:` for speaker notes.
+- **Three ways in** — describe the talk and let the model write the outline, paste or upload Markdown (use it as-is, or have the model restructure it into slides), or start from a template.
+- **Present** — full screen, arrow keys or space to move, `n` for speaker notes, `f` for full screen. Code slides tagged ` ```js run ` execute in the sandboxed worker **while you present**, so a demo shows the code working instead of asking the room to take it on faith. Link straight to a slide with `?s=7`.
+- **Real PowerPoint** — **Export → PowerPoint** writes a `.pptx` of native shapes and text frames, with your speaker notes attached. Flowchart slides become PowerPoint's own flowchart shapes (decision diamonds, cylinders, predefined-process boxes) positioned by the same layout engine the screen uses — so the deck opens in PowerPoint or Keynote as something a colleague can keep editing.
+- **Three themes** — Neon (Loom's own), Slate, and Paper for printing or a bright room.
+
+## Diagrams (describe → flowchart)
+
+The **Diagrams** tab draws the kind of diagram you put in a doc or a deck.
+
+- **Mermaid in, flowchart out** — diagrams are stored as `flowchart` source, so they are editable by hand and portable outside Loom. Loom parses eleven node shapes, the solid/thick/dotted link families, edge labels in both syntaxes, and `subgraph` groups.
+- **Live preview** — the source panel re-renders as you type, with parse warnings inline. Unparseable lines are reported, not thrown, so a diagram that is 90% right still draws.
+- **Laid out properly** — dagre places the nodes; edges route orthogonally and fan out in cross-axis order, so the branches out of a decision leave from different points on the diamond's actual outline instead of piling onto one.
+- **Iterate with the model** — "add an error path from validation" edits the diagram you have rather than starting over.
+- **Export** — PNG, SVG, or the Mermaid source.
+
+## Code Lab (write → run → prove)
+
+The **Code Lab** tab is for showing that code works.
+
+- **It actually runs.** JavaScript executes in a throwaway **Web Worker**: no DOM, no access to the page, and terminable mid-loop, so an infinite loop costs a 5-second timeout instead of a frozen tab. HTML snippets render in an iframe with `allow-scripts` and nothing else. Everything runs in your browser; nothing is sent anywhere.
+- **Tests that fit in one line.** A case is a pair of JavaScript expressions — `parseDuration('1h 30m')` should equal `5400` — evaluated in the snippet's own scope, so a test can call anything the code declares without the code exporting it. Expectations are expressions too, so a case can assert an object or an array.
+- **The model writes them** — **Write tests** proposes cases from the code it can see; **Fix failures** hands the model the run's actual failures (expected versus got, plus any thrown error) and rewrites the snippet.
+- **Explain and present** — **Explain this code** writes a walkthrough, and `/code/present/[id]` shows the code at a readable size with the walkthrough beside it and the tests already running.
 
 ## Documents (RAG)
 
@@ -418,16 +454,16 @@ The **Email** tab connects Loom to your Gmail so the local model can help you tr
 
 - **Inbox** — Inbox / Unread / Sent / All views, full Gmail search syntax (`from:`, `is:unread`, `newer_than:7d`, …), pagination, and unread markers. Opening a thread marks it read; archive and mark-unread are one click.
 - **Safe reading** — messages render as plain text by default; HTML mail opens in a fully sandboxed frame (no scripts) with remote images **blocked until you allow them** (bye, tracking pixels). Attachments download through Loom.
-- **Summaries** — one click summarizes a thread (cached until new mail arrives, re-runnable), and the ✨ digest button streams a briefing of your unread mail grouped into *needs a reply / worth reading / low priority*.
+- **Summaries** — one click summarizes a thread (cached until new mail arrives, re-runnable), and the ✨ digest button streams a briefing of your unread mail grouped into _needs a reply / worth reading / low priority_.
 - **Replies** — a composer with reply / reply-all and an **AI draft** button (plus an optional guidance field) that streams a ready-to-edit reply. Sends are proper Gmail replies — same thread, correct `In-Reply-To`/`References` headers.
-- **Assistant** — a docked email agent with tools (`searchEmails`, `readThread`, `sendReply`, `archiveThread`, `markThreadRead`). Give it a goal — *"find everything that needs a reply this week, make a plan, and draft the answers"* — and it states a numbered plan, executes it, and proposes replies. **Every send pauses for your approval**: you see the exact text and approve or deny it. Archive/read changes run freely; nothing is ever deleted.
+- **Assistant** — a docked email agent with tools (`searchEmails`, `readThread`, `sendReply`, `archiveThread`, `markThreadRead`). Give it a goal — _"find everything that needs a reply this week, make a plan, and draft the answers"_ — and it states a numbered plan, executes it, and proposes replies. **Every send pauses for your approval**: you see the exact text and approve or deny it. Archive/read changes run freely; nothing is ever deleted.
 
 ### Gmail setup (one-time, ~5 minutes)
 
 Loom ships no shared Google credentials — you use your own free OAuth client:
 
 1. In the [Google Cloud console](https://console.cloud.google.com/), create a project and enable the **Gmail API**.
-2. Configure the **OAuth consent screen** (External) and add your own address as a test user. Note: apps left in *Testing* status get refresh tokens that expire after 7 days — publish the app to **Production** (the "unverified app" warning is fine to click through; you're its only user) for a permanent connection.
+2. Configure the **OAuth consent screen** (External) and add your own address as a test user. Note: apps left in _Testing_ status get refresh tokens that expire after 7 days — publish the app to **Production** (the "unverified app" warning is fine to click through; you're its only user) for a permanent connection.
 3. Create **Credentials → OAuth client ID → Web application**, and register the exact redirect URI the Email tab shows you (e.g. `http://localhost:3000/api/gmail/oauth/callback`).
 4. Paste the client id + secret into the Email tab, **Save**, then **Connect Google account**.
 
@@ -437,7 +473,7 @@ Scope requested: `gmail.modify` — read, send, archive, and mark read/unread; i
 
 ```
 src/
-  app/            # routes: / (Chat), /email, /agents, /research, /experimental, /canvas, /opencode, /editor, /documents, /memory, /settings
+  app/            # routes: / (Chat), /email, /agents, /research, /experimental, /canvas, /slides, /diagrams, /code, /opencode, /editor, /documents, /memory, /settings
     api/
       chat/       # streaming chat route (tools + memory + document injection)
       agent/      # agent route: multi-step tool loop, capability-gated tools
@@ -445,12 +481,14 @@ src/
       bidirectional/  # Experimental Agent: NDJSON run stream + poll/cancel (SearXNG + Firecrawl grounding)
       editor/     # doc-aware assistant chat for the Editor tab
       documents/  # multipart upload → parse → chunk → embed → store
+      slides/     # deck → .pptx download (built server-side with pptxgenjs)
       tools/      # available-tool list (for the per-session toggles)
       llm/        # ping + models endpoints
       mcp/        # servers CRUD + test connection
-  components/     # nav, chat view, tool-call + reasoning blocks, agent settings, editor, documents, shadcn/ui
+  components/     # nav, chat view, tool-call + reasoning blocks, agent settings, editor, documents, slides, diagrams, code lab, shadcn/ui
   db/             # Drizzle schema + better-sqlite3 client
   lib/            # settings, provider, memory, documents (RAG), editor, chat-store, mcp client, tool registry, agent, capabilities
+                  # deck/decks + pptx (slides), diagram/diagram-svg/diagrams (flowcharts), code/code-runner/snippets (Code Lab)
 data/loom.db      # SQLite database (gitignored)
 drizzle/          # committed migrations
 ```

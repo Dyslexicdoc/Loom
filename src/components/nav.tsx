@@ -15,6 +15,7 @@ import {
   NotebookPen,
   FlaskConical,
   Braces,
+  Presentation,
   LayoutDashboard,
   GitBranch,
   Gauge,
@@ -37,6 +38,7 @@ const primaryItems: NavItem[] = [
   { href: "/research", label: "Deep Research", icon: Telescope },
   { href: "/experimental", label: "Experimental Agent", icon: FlaskConical },
   { href: "/canvas", label: "Canvas", icon: Workflow },
+  { href: "/slides", label: "Slides", icon: Presentation },
   { href: "/diagrams", label: "Diagrams", icon: GitBranch },
   { href: "/dashboards", label: "Dashboards", icon: LayoutDashboard },
   { href: "/benchmarks", label: "Benchmarks", icon: Gauge },
@@ -48,7 +50,7 @@ const primaryItems: NavItem[] = [
 ];
 
 /** Routes that render as standalone documents (print/preview), with no app chrome. */
-const CHROMELESS = ["/benchmarks/report/", "/code/present/"];
+const CHROMELESS = ["/benchmarks/report/", "/code/present/", "/slides/present/"];
 
 function isActive(pathname: string, href: string) {
   if (href === "/") {
@@ -73,10 +75,10 @@ function NavLink({
       style={{ animationDelay: `${index * 45}ms` }}
       className={cn(
         "animate-fade-in-up group relative flex items-center gap-3 px-3 py-2 text-[0.82rem] font-medium tracking-wide uppercase",
-        "before:absolute before:top-1/2 before:left-0 before:h-0 before:w-[2px] before:-translate-y-1/2 before:bg-primary before:transition-all before:content-['']",
+        "before:bg-primary before:absolute before:top-1/2 before:left-0 before:h-0 before:w-[2px] before:-translate-y-1/2 before:transition-all before:content-['']",
         active
           ? "bg-sidebar-accent text-sidebar-accent-foreground text-glow-cyan before:h-[70%] before:shadow-[0_0_10px_var(--neon-magenta)]"
-          : "text-muted-foreground hover:text-sidebar-accent-foreground hover:translate-x-0.5 hover:bg-sidebar-accent/50 hover:before:h-[40%]",
+          : "text-muted-foreground hover:text-sidebar-accent-foreground hover:bg-sidebar-accent/50 hover:translate-x-0.5 hover:before:h-[40%]",
       )}
     >
       <Icon

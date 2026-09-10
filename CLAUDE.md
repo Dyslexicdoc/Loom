@@ -38,8 +38,8 @@ Local-first web UI for a local LLM. Next.js full-stack app, runs entirely on loc
 
 ```
 src/
-  app/                 # routes: /(chat), /agents, /research, /canvas, /memory, /settings
-    api/               # route handlers (llm ping, chat, mcp, etc.)
+  app/                 # routes: /(chat), /agents, /research, /canvas, /slides, /diagrams, /code, /memory, /settings
+    api/               # route handlers (llm ping, chat, mcp, slides pptx export, etc.)
   components/          # shadcn ui + app components
   db/                  # schema.ts, client.ts, migrations/
   lib/                 # settings, llm client, mcp, search, memory, types
@@ -71,6 +71,21 @@ drizzle/               # generated migrations (or src/db/migrations)
 ## shadcn = Base UI (not Radix)
 
 This project's shadcn style is **base-nova**, backed by `@base-ui/react`. Triggers render a real element by default and use a **`render` prop** (not `asChild`); open state is exposed as **`data-[popup-open]`** (not `data-[state=open]`). `Select`'s `onValueChange` is `(value: string | null, details) => void`.
+
+## Slides, Diagrams, and the Code Lab
+
+These three share one habit: **the source of truth is text**, and everything else is derived from it on read.
+
+- **Diagrams** are Mermaid `flowchart` source. `lib/diagram.ts` parses it, lays it out with dagre, and routes the edges; `lib/diagram-svg.ts` renders. There is no cached spec to invalidate.
+- **Decks** are a Markdown outline. `lib/deck.ts` parses it into typed slides, inferring each slide's layout from its content. Adding a layout means teaching the parser a shape, the renderer a case, and `lib/pptx.ts` a case — in that order.
+- **Snippets** are source plus JSON test cases, run in the browser.
+
+Two rules keep these honest:
+
+1. **One layout engine.** `routeDiagram` in `lib/diagram.ts` decides where every node and edge goes. The SVG renderer, the on-screen view, and the PowerPoint exporter all draw from its result — so an exported deck matches the screen instead of approximating it. Never compute positions anywhere else.
+2. **Code never runs on the server.** `lib/code-runner.ts` builds a Blob Web Worker; HTML previews get an iframe with `allow-scripts` and nothing else. Keep it that way — the server has the user's database on it.
+
+PowerPoint export (`lib/pptx.ts`) is server-only, because pptxgenjs needs a Node buffer. It emits native shapes, never images.
 
 ## Gotchas
 

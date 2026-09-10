@@ -98,7 +98,12 @@ const SHAPES: [string, string, NodeShape][] = [
 /** Link forms, tried in order — labelled variants must precede their bare forms. */
 const LINKS: { re: RegExp; style: EdgeStyle; arrow: boolean; labelled: boolean }[] = [
   { re: /^-{2,}\s*([^->|][^-]*?)\s*-{2,}>/, style: "solid", arrow: true, labelled: true },
-  { re: /^-{2,}\s*([^->|][^-]*?)\s*-{2,}(?!-)/, style: "solid", arrow: false, labelled: true },
+  {
+    re: /^-{2,}\s*([^->|][^-]*?)\s*-{2,}(?!-)/,
+    style: "solid",
+    arrow: false,
+    labelled: true,
+  },
   { re: /^-\.\s*([^.]*?)\s*\.-+>/, style: "dotted", arrow: true, labelled: true },
   { re: /^={2,}\s*([^=>|][^=]*?)\s*={2,}>/, style: "thick", arrow: true, labelled: true },
   { re: /^-\.-*>/, style: "dotted", arrow: true, labelled: false },
@@ -110,12 +115,16 @@ const LINKS: { re: RegExp; style: EdgeStyle; arrow: boolean; labelled: boolean }
 ];
 
 /** Statements that carry styling or config we render our own way, and so skip. */
-const IGNORED = /^(classDef|class|style|linkStyle|click|%%|direction\b|accTitle|accDescr)/;
+const IGNORED =
+  /^(classDef|class|style|linkStyle|click|%%|direction\b|accTitle|accDescr)/;
 
 const ID_CHARS = /[A-Za-z0-9_.-]/;
 
 function clean(text: string): string {
-  const unquoted = text.trim().replace(/^"([\s\S]*)"$/, "$1").replace(/^'([\s\S]*)'$/, "$1");
+  const unquoted = text
+    .trim()
+    .replace(/^"([\s\S]*)"$/, "$1")
+    .replace(/^'([\s\S]*)'$/, "$1");
   // Mermaid writes hard breaks as <br>; keep them as real newlines for layout.
   return unquoted
     .replace(/<br\s*\/?>/gi, "\n")
@@ -288,7 +297,10 @@ export function parseDiagram(source: string): ParseResult {
     let cursor = 0;
     let left = readNodeRefs(statement, cursor, declare);
     if (!left) {
-      warnings.push({ line: lineNo, message: `Could not read "${statement.slice(0, 60)}".` });
+      warnings.push({
+        line: lineNo,
+        message: `Could not read "${statement.slice(0, 60)}".`,
+      });
       return;
     }
     cursor = left.end;
@@ -324,7 +336,10 @@ export function parseDiagram(source: string): ParseResult {
 
       const right = readNodeRefs(statement, cursor, declare);
       if (!right) {
-        warnings.push({ line: lineNo, message: `Link with no target in "${statement.slice(0, 60)}".` });
+        warnings.push({
+          line: lineNo,
+          message: `Link with no target in "${statement.slice(0, 60)}".`,
+        });
         return;
       }
       cursor = right.end;
@@ -400,7 +415,8 @@ export function serializeDiagram(spec: DiagramSpec): string {
   }
 
   for (const edge of spec.edges) {
-    const arrow = edge.style === "dotted" ? "-.->" : edge.style === "thick" ? "==>" : "-->";
+    const arrow =
+      edge.style === "dotted" ? "-.->" : edge.style === "thick" ? "==>" : "-->";
     const open = edge.arrow ? arrow : arrow.replace(">", "-");
     const label = edge.label ? `|${edge.label.replace(/\|/g, "/")}|` : "";
     lines.push(`  ${edge.source} ${open}${label} ${edge.target}`);
@@ -468,12 +484,19 @@ export function wrapLabel(label: string, maxChars: number): string[] {
  * Estimates a node's box from its label. Server and client both call this, so a
  * diagram exported to PowerPoint keeps the proportions it had on screen.
  */
-export function measureNode(node: DiagramNode): { width: number; height: number; lines: string[] } {
+export function measureNode(node: DiagramNode): {
+  width: number;
+  height: number;
+  lines: string[];
+} {
   const maxChars = Math.floor((MAX_WIDTH - PAD_X) / CHAR_WIDTH);
   const lines = wrapLabel(node.label, maxChars);
   const longest = Math.max(...lines.map((l) => l.length), 1);
 
-  let width = Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, Math.round(longest * CHAR_WIDTH) + PAD_X));
+  let width = Math.min(
+    MAX_WIDTH,
+    Math.max(MIN_WIDTH, Math.round(longest * CHAR_WIDTH) + PAD_X),
+  );
   let height = lines.length * LINE_HEIGHT + PAD_Y;
 
   // Diamonds and circles waste their corners, so they need room around the text.
@@ -518,7 +541,11 @@ export function layoutDiagram(spec: DiagramSpec): DiagramLayout {
   for (const edge of spec.edges) {
     if (!sizes.has(edge.source) || !sizes.has(edge.target)) continue;
     // Labelled edges need a longer span so the text does not sit on a node.
-    g.setEdge(edge.source, edge.target, { minlen: edge.label ? 1 : 1, width: 0, height: 0 });
+    g.setEdge(edge.source, edge.target, {
+      minlen: edge.label ? 1 : 1,
+      width: 0,
+      height: 0,
+    });
   }
   dagre.layout(g);
 
@@ -537,7 +564,9 @@ export function layoutDiagram(spec: DiagramSpec): DiagramLayout {
   const byId = new Map(nodes.map((n) => [n.id, n]));
   const groups: PlacedGroup[] = [];
   for (const group of spec.groups) {
-    const members = spec.nodes.filter((n) => n.group === group.id).flatMap((n) => byId.get(n.id) ?? []);
+    const members = spec.nodes
+      .filter((n) => n.group === group.id)
+      .flatMap((n) => byId.get(n.id) ?? []);
     if (members.length === 0) continue;
     const x = Math.min(...members.map((m) => m.x)) - GROUP_PAD;
     const y = Math.min(...members.map((m) => m.y)) - GROUP_PAD - GROUP_HEADER;
@@ -563,6 +592,249 @@ export function layoutDiagram(spec: DiagramSpec): DiagramLayout {
     width: boxes.length > 0 ? Math.max(...boxes.map((b) => b.x + b.width)) : 0,
     height: boxes.length > 0 ? Math.max(...boxes.map((b) => b.y + b.height)) : 0,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Routing
+// ---------------------------------------------------------------------------
+
+export interface Point {
+  x: number;
+  y: number;
+}
+
+export interface RoutedEdge extends DiagramEdge {
+  /** Orthogonal waypoints from the source's border to the target's. */
+  points: Point[];
+  /** Where the edge's label sits, when it has one. */
+  labelAt?: Point;
+}
+
+export interface RoutedDiagram extends DiagramLayout {
+  edges: RoutedEdge[];
+}
+
+/** How far a loop-back edge stands off from the boxes it routes around. */
+const LANE_GAP = 28;
+
+/**
+ * Spreads each node's edges across the side they share, ordered by `position`
+ * so the lines fan out without crossing. Returns edge id → fraction of the side.
+ */
+function slotsBy<T extends { edge: DiagramEdge }>(
+  items: T[],
+  keyOf: (item: T) => string,
+  position: (item: T) => number,
+): Map<string, number> {
+  const byNode = new Map<string, T[]>();
+  for (const item of items) {
+    const key = keyOf(item);
+    const list = byNode.get(key);
+    if (list) list.push(item);
+    else byNode.set(key, [item]);
+  }
+  const out = new Map<string, number>();
+  for (const list of byNode.values()) {
+    const ordered = [...list].sort((a, b) => position(a) - position(b));
+    for (const [index, item] of ordered.entries()) {
+      out.set(item.edge.id, (index + 1) / (ordered.length + 1));
+    }
+  }
+  return out;
+}
+
+export type Side = "top" | "bottom" | "left" | "right";
+
+/**
+ * The point on a node's *outline* — not its bounding box — where an edge should
+ * attach, `fraction` of the way along `side`.
+ *
+ * This matters for the shapes that narrow. A decision's bounding box is much
+ * wider than the diamond at the height where a second branch leaves it, so
+ * attaching to the box leaves the line visibly floating in space next to the
+ * shape. Diamonds and ellipses are solved exactly; the shapes with a chamfer
+ * (hexagon, the parallelograms, the flag) just keep their attachment inside the
+ * flat part of the side.
+ */
+export function attachPoint(node: PlacedNode, side: Side, fraction: number): Point {
+  const cx = node.x + node.width / 2;
+  const cy = node.y + node.height / 2;
+  const halfW = node.width / 2;
+  const halfH = node.height / 2;
+  const vertical = side === "top" || side === "bottom";
+  const sign = side === "bottom" || side === "right" ? 1 : -1;
+
+  // How far in from the corners the outline is still flat, as a fraction.
+  const chamfer = chamferOf(node.shape, vertical ? node.width : node.height);
+  const clamped = Math.min(1 - chamfer, Math.max(chamfer, fraction));
+
+  if (vertical) {
+    const x = node.x + node.width * clamped;
+    const inset = taper(node.shape, Math.abs(x - cx) / halfW);
+    return { x, y: cy + sign * halfH * inset };
+  }
+  const y = node.y + node.height * clamped;
+  const inset = taper(node.shape, Math.abs(y - cy) / halfH);
+  return { x: cx + sign * halfW * inset, y };
+}
+
+/**
+ * How far out the outline still reaches, as a fraction of the half-extent, at
+ * `offset` (0 at the centre line, 1 at the corner of the bounding box).
+ */
+function taper(shape: NodeShape, offset: number): number {
+  const clamped = Math.min(1, Math.max(0, offset));
+  if (shape === "decision") return 1 - clamped;
+  if (shape === "circle") return Math.sqrt(Math.max(0, 1 - clamped * clamped));
+  return 1;
+}
+
+/** The fraction of a side lost to a chamfer, so attachments stay on the flat. */
+function chamferOf(shape: NodeShape, extent: number): number {
+  if (shape === "hexagon" || shape === "io" || shape === "io-alt" || shape === "flag") {
+    return Math.min(0.4, 20 / Math.max(1, extent));
+  }
+  if (shape === "stadium" || shape === "rounded") {
+    return 0.12;
+  }
+  return 0.02;
+}
+
+/**
+ * Routes one edge orthogonally. Forward edges take the short way between the
+ * facing sides; an edge running back against the flow gets its own lane clear of
+ * both boxes, the way a hand-drawn flowchart loops back.
+ *
+ * `exit` and `entry` spread the attachment points across each side, so the three
+ * branches out of a decision leave from three places rather than piling onto one.
+ */
+function routeEdge(
+  source: PlacedNode,
+  target: PlacedNode,
+  vertical: boolean,
+  reversed: boolean,
+  forward: boolean,
+  exit: number,
+  entry: number,
+): Point[] {
+  if (!forward) {
+    // Against the flow: out one side of both boxes and back in, clear of them.
+    const side: Side = vertical ? "right" : "bottom";
+    const from = attachPoint(source, side, 0.5);
+    const to = attachPoint(target, side, 0.5);
+    const lane = vertical
+      ? Math.max(source.x + source.width, target.x + target.width) + LANE_GAP
+      : Math.max(source.y + source.height, target.y + target.height) + LANE_GAP;
+    return vertical
+      ? [from, { x: lane, y: from.y }, { x: lane, y: to.y }, to]
+      : [from, { x: from.x, y: lane }, { x: to.x, y: lane }, to];
+  }
+
+  const exitSide: Side = vertical
+    ? reversed
+      ? "top"
+      : "bottom"
+    : reversed
+      ? "left"
+      : "right";
+  const entrySide: Side = vertical
+    ? reversed
+      ? "bottom"
+      : "top"
+    : reversed
+      ? "right"
+      : "left";
+  const from = attachPoint(source, exitSide, exit);
+  const to = attachPoint(target, entrySide, entry);
+
+  if (vertical) {
+    if (Math.abs(from.x - to.x) < 2) {
+      return [from, { x: from.x, y: to.y }];
+    }
+    // The dog-leg turns halfway between the two boxes, not between the two
+    // attachment points, so a tapered shape does not drag the corner inwards.
+    const mid = reversed
+      ? (source.y + (target.y + target.height)) / 2
+      : (source.y + source.height + target.y) / 2;
+    return [from, { x: from.x, y: mid }, { x: to.x, y: mid }, to];
+  }
+
+  if (Math.abs(from.y - to.y) < 2) {
+    return [from, { x: to.x, y: from.y }];
+  }
+  const mid = reversed
+    ? (source.x + (target.x + target.width)) / 2
+    : (source.x + source.width + target.x) / 2;
+  return [from, { x: mid, y: from.y }, { x: mid, y: to.y }, to];
+}
+
+/**
+ * Anchors an edge label near where the edge leaves its source, which is where a
+ * reader looks to tell two branches apart. Falls back to the path midpoint when
+ * the first segment is too short to hold it.
+ */
+function labelPoint(points: Point[]): Point {
+  const [first, second] = points;
+  if (points.length > 2 && Math.hypot(second.x - first.x, second.y - first.y) >= 26) {
+    return { x: (first.x + second.x) / 2, y: (first.y + second.y) / 2 };
+  }
+  const index = Math.floor(points.length / 2);
+  const mid = points[index];
+  const prev = points[Math.max(0, index - 1)];
+  return { x: (mid.x + prev.x) / 2, y: (mid.y + prev.y) / 2 };
+}
+
+/**
+ * Lays a diagram out and routes every edge. This is the one place that decides
+ * where anything goes: the SVG renderer and the PowerPoint exporter both draw
+ * from this result, so an exported deck matches the screen rather than
+ * approximating it.
+ */
+export function routeDiagram(spec: DiagramSpec): RoutedDiagram {
+  const layout = layoutDiagram(spec);
+  const byId = new Map(layout.nodes.map((node) => [node.id, node]));
+  const vertical = spec.direction === "TB" || spec.direction === "BT";
+  const reversed = spec.direction === "BT" || spec.direction === "RL";
+
+  // Direction is decided first: only forward edges take a slot on a facing side.
+  const routable = spec.edges.flatMap((edge) => {
+    const source = byId.get(edge.source);
+    const target = byId.get(edge.target);
+    if (!source || !target || source === target) return [];
+    const along = vertical
+      ? target.y + target.height / 2 - (source.y + source.height / 2)
+      : target.x + target.width / 2 - (source.x + source.width / 2);
+    return [{ edge, source, target, forward: reversed ? along < 0 : along > 0 }];
+  });
+
+  const across = (node: PlacedNode) =>
+    vertical ? node.x + node.width / 2 : node.y + node.height / 2;
+  const forwards = routable.filter((item) => item.forward);
+  const exits = slotsBy(
+    forwards,
+    (item) => item.edge.source,
+    (item) => across(item.target),
+  );
+  const entries = slotsBy(
+    forwards,
+    (item) => item.edge.target,
+    (item) => across(item.source),
+  );
+
+  const edges: RoutedEdge[] = routable.map(({ edge, source, target, forward }) => {
+    const points = routeEdge(
+      source,
+      target,
+      vertical,
+      reversed,
+      forward,
+      exits.get(edge.id) ?? 0.5,
+      entries.get(edge.id) ?? 0.5,
+    );
+    return { ...edge, points, labelAt: edge.label ? labelPoint(points) : undefined };
+  });
+
+  return { ...layout, edges };
 }
 
 /** True when the source has at least one node — i.e. something worth rendering. */

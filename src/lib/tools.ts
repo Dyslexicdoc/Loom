@@ -7,6 +7,7 @@ import { getAllMcpTools, callMcpTool } from "./mcp";
 import { fetchReadable, searxngSearch } from "./web";
 import { searchDocuments } from "./documents";
 import { createFlowchartFromPrompt } from "./diagrams";
+import { createDeckFromPrompt } from "./decks";
 
 export { stepCountIs };
 
@@ -27,6 +28,7 @@ export const BUILTIN_TOOL_KEYS = [
   "currentDateTime",
   "searchDocuments",
   "createFlowchart",
+  "createSlideDeck",
 ] as const;
 
 // ---------------------------------------------------------------------------
@@ -178,7 +180,9 @@ function buildCalculatorTool() {
   const inputSchema = z.object({
     expression: z
       .string()
-      .describe("Arithmetic expression, e.g. \"(3 + 4) * 2 ^ 3 / 7\". Supports + - * / % ^."),
+      .describe(
+        'Arithmetic expression, e.g. "(3 + 4) * 2 ^ 3 / 7". Supports + - * / % ^.',
+      ),
   });
   type Input = z.infer<typeof inputSchema>;
 
@@ -278,6 +282,37 @@ function buildFlowchartTool() {
 }
 
 // ---------------------------------------------------------------------------
+// Built-in: build a slide deck (saved to the Slides page)
+// ---------------------------------------------------------------------------
+function buildSlideDeckTool() {
+  const inputSchema = z.object({
+    description: z
+      .string()
+      .describe(
+        "What the deck should cover: the subject, the audience, and any points " +
+          "that must appear. Include the source material itself when there is some.",
+      ),
+    title: z.string().optional().describe("A short title for the deck"),
+  });
+  type Input = z.infer<typeof inputSchema>;
+
+  return tool({
+    description:
+      "Build a slide deck and save it to the user's Slides page. Use this when the user asks " +
+      "for slides, a deck, a presentation, or a PowerPoint. The deck can be presented in the " +
+      "browser or exported as a .pptx file.",
+    inputSchema,
+    execute: async ({ description, title }: Input) => {
+      const result = await createDeckFromPrompt(description, title);
+      if ("error" in result) {
+        return result;
+      }
+      return { ...result, url: `/slides?d=${result.id}` };
+    },
+  });
+}
+
+// ---------------------------------------------------------------------------
 // Registry
 // ---------------------------------------------------------------------------
 /**
@@ -294,6 +329,7 @@ export async function buildToolRegistry(enabledKeys?: string[]): Promise<ToolSet
     currentDateTime: buildDateTimeTool(),
     searchDocuments: buildSearchDocumentsTool(),
     createFlowchart: buildFlowchartTool(),
+    createSlideDeck: buildSlideDeckTool(),
   };
 
   const mcpTools = await getAllMcpTools();
@@ -330,9 +366,24 @@ export async function buildToolRegistry(enabledKeys?: string[]): Promise<ToolSet
 export async function listAvailableTools(): Promise<ToolMeta[]> {
   const mcp = await getAllMcpTools();
   return [
-    { key: "searchWeb", name: "searchWeb", description: "Search the web via SearXNG", source: "builtin" },
-    { key: "readUrl", name: "readUrl", description: "Fetch a web page and read its text", source: "builtin" },
-    { key: "calculator", name: "calculator", description: "Evaluate arithmetic expressions", source: "builtin" },
+    {
+      key: "searchWeb",
+      name: "searchWeb",
+      description: "Search the web via SearXNG",
+      source: "builtin",
+    },
+    {
+      key: "readUrl",
+      name: "readUrl",
+      description: "Fetch a web page and read its text",
+      source: "builtin",
+    },
+    {
+      key: "calculator",
+      name: "calculator",
+      description: "Evaluate arithmetic expressions",
+      source: "builtin",
+    },
     {
       key: "currentDateTime",
       name: "currentDateTime",
@@ -349,6 +400,12 @@ export async function listAvailableTools(): Promise<ToolMeta[]> {
       key: "createFlowchart",
       name: "createFlowchart",
       description: "Draw a flowchart of a process",
+      source: "builtin",
+    },
+    {
+      key: "createSlideDeck",
+      name: "createSlideDeck",
+      description: "Build a slide deck (presentable and exportable as .pptx)",
       source: "builtin",
     },
     ...mcp.map((t) => ({
