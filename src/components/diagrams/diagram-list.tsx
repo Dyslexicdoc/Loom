@@ -10,7 +10,13 @@ import { deleteDiagramAction, renameDiagramAction } from "@/app/diagrams/actions
  * icon component and an href builder cannot cross the server/client boundary as
  * props — only the server actions can.
  */
-export function DiagramList({ items, activeId }: { items: SidebarItem[]; activeId?: string }) {
+export function DiagramList({
+  items,
+  activeId,
+}: {
+  items: SidebarItem[];
+  activeId?: string;
+}) {
   return (
     <SidebarList
       items={items}

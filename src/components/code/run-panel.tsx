@@ -1,12 +1,25 @@
 "use client";
 
 import { useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
-import { CheckCircle2, CircleSlash, Loader2, Play, TriangleAlert, XCircle } from "lucide-react";
+import {
+  CheckCircle2,
+  CircleSlash,
+  Loader2,
+  Play,
+  TriangleAlert,
+  XCircle,
+} from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { htmlPreviewDocument, isPreviewMessage, runJavaScript } from "@/lib/code-runner";
-import { passCount, type CodeLanguage, type ConsoleLine, type RunResult, type TestCase } from "@/lib/code";
+import {
+  passCount,
+  type CodeLanguage,
+  type ConsoleLine,
+  type RunResult,
+  type TestCase,
+} from "@/lib/code";
 
 export interface RunPanelHandle {
   run: () => void;
@@ -83,7 +96,10 @@ export function RunPanel({
     if (language !== "html") return;
     const onMessage = (event: MessageEvent) => {
       if (!isPreviewMessage(event.data)) return;
-      setPreviewLines((lines) => [...lines.slice(-99), { level: event.data.level, text: event.data.text }]);
+      setPreviewLines((lines) => [
+        ...lines.slice(-99),
+        { level: event.data.level, text: event.data.text },
+      ]);
     };
     window.addEventListener("message", onMessage);
     return () => window.removeEventListener("message", onMessage);
@@ -97,7 +113,11 @@ export function RunPanel({
     <div className={cn("flex min-h-0 flex-col", className)}>
       <div className="flex shrink-0 items-center gap-2 border-b px-3 py-2">
         <Button size="sm" onClick={() => void run()} disabled={running} className="gap-2">
-          {running ? <Loader2 className="size-4 animate-spin" /> : <Play className="size-4" />}
+          {running ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <Play className="size-4" />
+          )}
           Run
         </Button>
         {outcomes.length > 0 ? (
@@ -180,7 +200,7 @@ export function RunPanel({
         {!result && language === "javascript" && lines.length === 0 ? (
           <p className="text-muted-foreground flex items-center gap-2 px-3 py-6 text-xs">
             <CircleSlash className="size-4" />
-            Not run yet — press Run, or Ctrl+Enter in the editor.
+            Not run yet — press Run.
           </p>
         ) : null}
       </div>

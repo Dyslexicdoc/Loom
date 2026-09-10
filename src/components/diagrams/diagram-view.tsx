@@ -154,7 +154,10 @@ export function DiagramView({ diagram }: { diagram: DiagramSummary }) {
         {showSource ? (
           <aside className="flex w-96 shrink-0 flex-col gap-3 border-l p-3">
             <div className="space-y-1.5">
-              <label htmlFor="diagram-source" className="text-muted-foreground text-xs font-medium">
+              <label
+                htmlFor="diagram-source"
+                className="text-muted-foreground text-xs font-medium"
+              >
                 Mermaid source — edits preview live
               </label>
               <Textarea
@@ -182,7 +185,11 @@ export function DiagramView({ diagram }: { diagram: DiagramSummary }) {
               disabled={!dirty || isPending}
               className="gap-2"
             >
-              {isPending ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
+              {isPending ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Save className="size-4" />
+              )}
               {dirty ? "Save source" : "Saved"}
             </Button>
 

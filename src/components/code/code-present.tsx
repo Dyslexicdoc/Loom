@@ -42,7 +42,9 @@ export function CodePresent({
           <SyntaxHighlighter
             language={language === "html" ? "markup" : "javascript"}
             style={oneDark}
-            showLineNumbers
+            // No `showLineNumbers`: its gutter serializes inline styles in a
+            // different order on the server than the client, which React
+            // reports as a hydration mismatch it will not patch up.
             customStyle={{ margin: 0, background: "transparent", fontSize: "0.95rem" }}
             codeTagProps={{ style: { fontFamily: "var(--font-geist-mono, monospace)" } }}
           >

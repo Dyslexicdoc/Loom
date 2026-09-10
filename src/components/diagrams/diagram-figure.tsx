@@ -58,9 +58,14 @@ export function DiagramPanZoom({
 }) {
   const frame = useRef<HTMLDivElement | null>(null);
   const [view, setView] = useState({ x: 0, y: 0, zoom: 1 });
-  const drag = useRef<{ x: number; y: number; startX: number; startY: number } | null>(null);
+  const drag = useRef<{ x: number; y: number; startX: number; startY: number } | null>(
+    null,
+  );
 
-  const svg = useMemo(() => diagramToSvg(spec, { theme, paintBackground: false }), [spec, theme]);
+  const svg = useMemo(
+    () => diagramToSvg(spec, { theme, paintBackground: false }),
+    [spec, theme],
+  );
   const size = useMemo(() => {
     const match = /width="([\d.]+)" height="([\d.]+)"/.exec(svg);
     return { width: Number(match?.[1] ?? 400), height: Number(match?.[2] ?? 300) };
@@ -69,7 +74,11 @@ export function DiagramPanZoom({
   const fit = useCallback(() => {
     const box = frame.current?.getBoundingClientRect();
     if (!box || size.width === 0 || size.height === 0) return;
-    const zoom = Math.min((box.width - 48) / size.width, (box.height - 48) / size.height, 1.6);
+    const zoom = Math.min(
+      (box.width - 48) / size.width,
+      (box.height - 48) / size.height,
+      1.6,
+    );
     const next = Math.max(MIN_ZOOM, zoom);
     setView({
       zoom: next,
@@ -97,7 +106,10 @@ export function DiagramPanZoom({
   return (
     <div
       ref={frame}
-      className={cn("relative cursor-grab overflow-hidden active:cursor-grabbing", className)}
+      className={cn(
+        "relative cursor-grab overflow-hidden active:cursor-grabbing",
+        className,
+      )}
       onPointerDown={(e) => {
         drag.current = { x: view.x, y: view.y, startX: e.clientX, startY: e.clientY };
         e.currentTarget.setPointerCapture(e.pointerId);
@@ -125,7 +137,11 @@ export function DiagramPanZoom({
             Math.max(MIN_ZOOM, current.zoom * (e.deltaY < 0 ? 1.12 : 1 / 1.12)),
           );
           const scale = zoom / current.zoom;
-          return { zoom, x: px - (px - current.x) * scale, y: py - (py - current.y) * scale };
+          return {
+            zoom,
+            x: px - (px - current.x) * scale,
+            y: py - (py - current.y) * scale,
+          };
         });
       }}
       style={{ touchAction: "none" }}
@@ -136,10 +152,20 @@ export function DiagramPanZoom({
         dangerouslySetInnerHTML={{ __html: svg }}
       />
       <div className="absolute right-3 bottom-3 flex gap-1">
-        <Button size="icon" variant="outline" onClick={() => zoomBy(1 / 1.25)} aria-label="Zoom out">
+        <Button
+          size="icon"
+          variant="outline"
+          onClick={() => zoomBy(1 / 1.25)}
+          aria-label="Zoom out"
+        >
           <Minus className="size-4" />
         </Button>
-        <Button size="icon" variant="outline" onClick={() => zoomBy(1.25)} aria-label="Zoom in">
+        <Button
+          size="icon"
+          variant="outline"
+          onClick={() => zoomBy(1.25)}
+          aria-label="Zoom in"
+        >
           <Plus className="size-4" />
         </Button>
         <Button size="icon" variant="outline" onClick={fit} aria-label="Fit to view">

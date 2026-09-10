@@ -6,7 +6,13 @@ import { SidebarList, type SidebarItem } from "@/components/sidebar-list";
 import { deleteSnippetAction, renameSnippetAction } from "@/app/code/actions";
 
 /** Binds the shared rail to the Code Lab route — see `DiagramList` for why. */
-export function CodeList({ items, activeId }: { items: SidebarItem[]; activeId?: string }) {
+export function CodeList({
+  items,
+  activeId,
+}: {
+  items: SidebarItem[];
+  activeId?: string;
+}) {
   return (
     <SidebarList
       items={items}

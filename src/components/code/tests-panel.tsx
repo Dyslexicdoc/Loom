@@ -80,7 +80,11 @@ export function TestsPanel({
           disabled={isPending}
           className="gap-2"
         >
-          {isPending ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
+          {isPending ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <Sparkles className="size-4" />
+          )}
           Write tests
         </Button>
         <Button
@@ -99,7 +103,10 @@ export function TestsPanel({
           variant="ghost"
           aria-label="Add test case"
           onClick={() =>
-            onChange([...tests, { id: cryptoId(), name: "New case", expression: "", expected: "" }])
+            onChange([
+              ...tests,
+              { id: cryptoId(), name: "New case", expression: "", expected: "" },
+            ])
           }
         >
           <Plus className="size-4" />
@@ -109,7 +116,8 @@ export function TestsPanel({
       <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-3">
         {tests.length === 0 ? (
           <p className="text-muted-foreground py-6 text-center text-xs">
-            No tests yet. Write some by hand, or let the model propose a set from the code.
+            No tests yet. Write some by hand, or let the model propose a set from the
+            code.
           </p>
         ) : null}
 

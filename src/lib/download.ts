@@ -33,12 +33,18 @@ export function downloadText(filename: string, text: string, mime = "text/plain"
  * self-contained — an <img> refuses to load external references — which the
  * diagram renderer guarantees.
  */
-export async function svgToPng(svg: string, scale = 2, background?: string): Promise<Blob> {
+export async function svgToPng(
+  svg: string,
+  scale = 2,
+  background?: string,
+): Promise<Blob> {
   const match = /width="([\d.]+)" height="([\d.]+)"/.exec(svg);
   const width = Number(match?.[1] ?? 800);
   const height = Number(match?.[2] ?? 600);
 
-  const url = URL.createObjectURL(new Blob([svg], { type: "image/svg+xml;charset=utf-8" }));
+  const url = URL.createObjectURL(
+    new Blob([svg], { type: "image/svg+xml;charset=utf-8" }),
+  );
   try {
     const image = new Image();
     image.decoding = "sync";

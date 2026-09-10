@@ -59,13 +59,22 @@ export function deleteSnippet(id: string): void {
 
 export function saveSnippet(
   id: string,
-  input: { source?: string; tests?: TestCase[]; language?: CodeLanguage; notes?: string | null },
+  input: {
+    source?: string;
+    tests?: TestCase[];
+    language?: CodeLanguage;
+    notes?: string | null;
+  },
 ): CodeSnippetRow | undefined {
   return db
     .update(codeSnippets)
     .set({
-      ...(input.source !== undefined ? { source: input.source.slice(0, SOURCE_MAX) } : {}),
-      ...(input.tests !== undefined ? { tests: JSON.stringify(input.tests.slice(0, MAX_TESTS)) } : {}),
+      ...(input.source !== undefined
+        ? { source: input.source.slice(0, SOURCE_MAX) }
+        : {}),
+      ...(input.tests !== undefined
+        ? { tests: JSON.stringify(input.tests.slice(0, MAX_TESTS)) }
+        : {}),
       ...(input.language !== undefined ? { language: input.language } : {}),
       ...(input.notes !== undefined ? { notes: input.notes } : {}),
       updatedAt: new Date().toISOString(),
@@ -138,7 +147,7 @@ export async function generateTests(source: string): Promise<TestCase[]> {
       "Rules:\n" +
       "- `expression` calls the code under test, e.g. \"slugify('Hello World')\".\n" +
       '- `expected` is the literal value it should produce, e.g. "\'hello-world\'" or "[1, 2]".\n' +
-      "- Wrap a bare object literal in parentheses: \"({ ok: true })\".\n" +
+      '- Wrap a bare object literal in parentheses: "({ ok: true })".\n' +
       "- `name` says what the case proves, in a few words.\n" +
       "- 3-6 cases. Cover the ordinary path first, then the edges that actually matter " +
       "(empty input, boundaries). Never assert something the code does not do.",
@@ -154,7 +163,10 @@ export async function generateTests(source: string): Promise<TestCase[]> {
 }
 
 /** Explains what a snippet does, as Markdown, for the Walkthrough panel. */
-export async function explainSnippet(source: string, language: CodeLanguage): Promise<string> {
+export async function explainSnippet(
+  source: string,
+  language: CodeLanguage,
+): Promise<string> {
   const { text } = await generateText({
     model: model(),
     system:
@@ -174,7 +186,9 @@ export async function fixSnippet(
   runError?: string,
 ): Promise<string> {
   const report = failures
-    .map((f) => `- ${f.name}: \`${f.expression}\` should be \`${f.expected}\` — ${f.detail}`)
+    .map(
+      (f) => `- ${f.name}: \`${f.expression}\` should be \`${f.expected}\` — ${f.detail}`,
+    )
     .join("\n");
   const { text } = await generateText({
     model: model(),

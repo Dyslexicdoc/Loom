@@ -118,7 +118,11 @@ export function CodeView({ snippet }: { snippet: SnippetSummary }) {
           disabled={!dirty || isPending}
           className="gap-2"
         >
-          {isPending ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
+          {isPending ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <Save className="size-4" />
+          )}
           {dirty ? "Save" : "Saved"}
         </Button>
       </header>
@@ -134,9 +138,13 @@ export function CodeView({ snippet }: { snippet: SnippetSummary }) {
         <aside className="flex w-[26rem] shrink-0 flex-col border-l">
           <Tabs defaultValue="output" className="flex min-h-0 flex-1 flex-col">
             <TabsList className="shrink-0">
-              <TabsTab value="output">{language === "html" ? "Preview" : "Output"}</TabsTab>
+              <TabsTab value="output">
+                {language === "html" ? "Preview" : "Output"}
+              </TabsTab>
               {language === "javascript" ? (
-                <TabsTab value="tests">Tests{tests.length > 0 ? ` (${tests.length})` : ""}</TabsTab>
+                <TabsTab value="tests">
+                  Tests{tests.length > 0 ? ` (${tests.length})` : ""}
+                </TabsTab>
               ) : null}
               <TabsTab value="notes">Walkthrough</TabsTab>
             </TabsList>

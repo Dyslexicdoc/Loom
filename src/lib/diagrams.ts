@@ -73,7 +73,10 @@ export function saveDiagramSource(id: string, source: string): DiagramRow | unde
 }
 
 /** Parses a row's stored Mermaid source into a spec, with any parse warnings. */
-export function loadDiagram(row: DiagramRow): { spec: DiagramSpec; warnings: ParseWarning[] } {
+export function loadDiagram(row: DiagramRow): {
+  spec: DiagramSpec;
+  warnings: ParseWarning[];
+} {
   return parseDiagram(row.source);
 }
 
@@ -202,7 +205,9 @@ export async function createFlowchartFromPrompt(
     });
     return { id: row.id, title: row.title, source: row.source };
   } catch (err) {
-    return { error: err instanceof Error ? err.message : "Failed to draw the flowchart." };
+    return {
+      error: err instanceof Error ? err.message : "Failed to draw the flowchart.",
+    };
   }
 }
 

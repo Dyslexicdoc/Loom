@@ -89,14 +89,20 @@ export function SidebarList({
   return (
     <div className="bg-sidebar/40 flex h-full w-64 shrink-0 flex-col border-r">
       <div className="p-2">
-        <Button onClick={handleNew} disabled={isPending} className="w-full justify-start gap-2">
+        <Button
+          onClick={handleNew}
+          disabled={isPending}
+          className="w-full justify-start gap-2"
+        >
           <Plus className="size-4" />
           {newLabel}
         </Button>
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-2">
         {items.length === 0 ? (
-          <p className="text-muted-foreground px-3 py-6 text-center text-xs">{emptyLabel}</p>
+          <p className="text-muted-foreground px-3 py-6 text-center text-xs">
+            {emptyLabel}
+          </p>
         ) : (
           <ul className="space-y-0.5">
             {items.map((item) => {
@@ -150,7 +156,10 @@ export function SidebarList({
                         <Pencil className="size-4" />
                         Rename
                       </DropdownMenuItem>
-                      <DropdownMenuItem variant="destructive" onClick={() => handleDelete(item.id)}>
+                      <DropdownMenuItem
+                        variant="destructive"
+                        onClick={() => handleDelete(item.id)}
+                      >
                         <Trash2 className="size-4" />
                         Delete
                       </DropdownMenuItem>

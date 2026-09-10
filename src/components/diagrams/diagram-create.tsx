@@ -29,7 +29,10 @@ export function DiagramCreate() {
   const [title, setTitle] = useState("");
   const [source, setSource] = useState("");
 
-  function run(action: () => Promise<{ id: string } | { error: string }>, success: string) {
+  function run(
+    action: () => Promise<{ id: string } | { error: string }>,
+    success: string,
+  ) {
     startTransition(async () => {
       const result = await action();
       if ("error" in result) {
@@ -51,8 +54,9 @@ export function DiagramCreate() {
             <span className="bg-neon-cyan animate-blink ml-1 inline-block h-3 w-2 align-middle" />
           </p>
           <p className="text-muted-foreground text-sm">
-            Describe a process and the model draws it as a flowchart — decisions, branches,
-            datastores, and all. Diagrams are stored as Mermaid source you can edit by hand.
+            Describe a process and the model draws it as a flowchart — decisions,
+            branches, datastores, and all. Diagrams are stored as Mermaid source you can
+            edit by hand.
           </p>
         </div>
 
@@ -139,7 +143,9 @@ export function DiagramCreate() {
                 id="diagram-source"
                 value={source}
                 onChange={(e) => setSource(e.target.value)}
-                placeholder={"flowchart TD\n  A([Start]) --> B{Ready?}\n  B -->|Yes| C[Ship]"}
+                placeholder={
+                  "flowchart TD\n  A([Start]) --> B{Ready?}\n  B -->|Yes| C[Ship]"
+                }
                 disabled={isPending}
                 className="min-h-56 font-mono text-xs"
               />
@@ -147,7 +153,10 @@ export function DiagramCreate() {
             <div className="flex justify-end">
               <Button
                 onClick={() =>
-                  run(() => createDiagramFromSourceAction({ source, title }), "Diagram created.")
+                  run(
+                    () => createDiagramFromSourceAction({ source, title }),
+                    "Diagram created.",
+                  )
                 }
                 disabled={isPending || !source.trim()}
               >

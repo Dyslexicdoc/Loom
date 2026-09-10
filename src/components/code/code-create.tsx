@@ -15,8 +15,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CODE_LANGUAGES, isLanguage, LANGUAGE_LABELS, type CodeLanguage } from "@/lib/code";
-import { createBlankSnippetAction, createSnippetFromPromptAction } from "@/app/code/actions";
+import {
+  CODE_LANGUAGES,
+  isLanguage,
+  LANGUAGE_LABELS,
+  type CodeLanguage,
+} from "@/lib/code";
+import {
+  createBlankSnippetAction,
+  createSnippetFromPromptAction,
+} from "@/app/code/actions";
 
 const EXAMPLES = [
   "A function that parses a duration like '1h 30m' into seconds",
@@ -31,7 +39,9 @@ export function CodeCreate() {
   const [language, setLanguage] = useState<CodeLanguage>("javascript");
   const [withTests, setWithTests] = useState(true);
 
-  function open(action: () => Promise<{ id: string; warning?: string } | { error: string }>) {
+  function open(
+    action: () => Promise<{ id: string; warning?: string } | { error: string }>,
+  ) {
     startTransition(async () => {
       const result = await action();
       if ("error" in result) {
@@ -55,8 +65,8 @@ export function CodeCreate() {
             <span className="bg-neon-cyan animate-blink ml-1 inline-block h-3 w-2 align-middle" />
           </p>
           <p className="text-muted-foreground text-sm">
-            Ask for a snippet, run it in a sandboxed worker, and hold it to test cases the model
-            writes from the code. Nothing leaves this machine.
+            Ask for a snippet, run it in a sandboxed worker, and hold it to test cases the
+            model writes from the code. Nothing leaves this machine.
           </p>
         </div>
 

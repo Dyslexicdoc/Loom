@@ -64,7 +64,8 @@ export function parseTests(raw: string): TestCase[] {
     return parsed.flatMap((item) => {
       if (typeof item !== "object" || item === null) return [];
       const test = item as Partial<TestCase>;
-      if (typeof test.expression !== "string" || typeof test.expected !== "string") return [];
+      if (typeof test.expression !== "string" || typeof test.expected !== "string")
+        return [];
       return [
         {
           id: typeof test.id === "string" ? test.id : cryptoId(),
@@ -81,7 +82,9 @@ export function parseTests(raw: string): TestCase[] {
 
 /** `crypto.randomUUID` is available in both the browser and Node here. */
 export function cryptoId(): string {
-  return globalThis.crypto?.randomUUID?.() ?? `t${Math.random().toString(36).slice(2, 10)}`;
+  return (
+    globalThis.crypto?.randomUUID?.() ?? `t${Math.random().toString(36).slice(2, 10)}`
+  );
 }
 
 export function passCount(outcomes: TestOutcome[]): number {
